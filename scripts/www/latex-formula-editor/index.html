@@ -1,0 +1,2623 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Formula Library</title>
+
+<!-- KaTeX -->
+<link rel="stylesheet" href="./katex/katex.min.css">
+<script src="./katex/katex.min.js"></script>
+
+<!-- MathJax -->
+<script>
+  window.MathJax = {
+    loader: { load: ['[tex]/all-packages'] },
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']],
+      displayMath: [['$$', '$$'], ['\\[', '\\]']]
+    }
+  };
+</script>
+<script>localStorage.removeItem("MathJax-Menu-Settings");</script>
+<script defer src="./MathJax-3.2.2/es5/tex-mml-chtml.js"></script>
+
+<style>
+  /* =========================================================================
+   *  科幻主题
+   * ========================================================================= */
+  :root {
+    --pb-bg-0:      #060a14;
+    --pb-bg-1:      #0a1220;
+    --pb-bg-2:      #101a30;
+    --pb-accent:    #22d3ee;
+    --pb-accent-2:  #a855f7;
+    --pb-accent-3:  #38bdf8;
+    --pb-accent-glow: rgba(34,211,238,.45);
+    --pb-text:      #c9e4f5;
+    --pb-text-dim:  #6b87a8;
+    --pb-text-faint:#3d5166;
+    --pb-border:    rgba(34,211,238,.20);
+    --pb-border-2:  rgba(34,211,238,.42);
+  }
+
+  html { background: var(--pb-bg-0) !important; height: 100%; }
+  body {
+    margin: 0 !important;
+    padding: 14px 18px 24px 72px !important; /* 左侧留出 72px 给侧边栏 */
+    background: var(--pb-bg-0) !important;
+    color: var(--pb-text) !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif !important;
+    font-size: 13px;
+    min-height: 100vh;
+    box-sizing: border-box;
+    position: relative;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ===== 左侧窄边栏 ===== */
+  .pb-sidebar {
+    position: fixed;
+    left: 0; top: 0; bottom: 0;
+    width: 56px;
+    background: linear-gradient(180deg, rgba(10,18,32,.92), rgba(6,10,20,.98)) !important;
+    border-right: 1px solid var(--pb-border) !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px 0;
+    z-index: 100;
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    box-shadow: 2px 0 20px rgba(0,0,0,.3);
+  }
+  .pb-side-btn {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    background: rgba(34,211,238,.04);
+    color: var(--pb-text-dim);
+    cursor: pointer;
+    display: grid; place-items: center;
+    transition: all .2s;
+    margin-bottom: 8px;
+    flex: none;
+  }
+  .pb-side-btn svg { width: 20px; height: 20px; }
+  .pb-side-btn:hover {
+    background: rgba(34,211,238,.12);
+    border-color: var(--pb-border-2);
+    color: var(--pb-accent);
+    box-shadow: 0 0 12px rgba(34,211,238,.2);
+  }
+  .pb-side-btn.active {
+    background: linear-gradient(135deg, rgba(34,211,238,.28), rgba(168,85,247,.22));
+    border-color: var(--pb-accent);
+    color: #fff;
+    box-shadow: 0 0 16px rgba(34,211,238,.4);
+  }
+  .pb-side-divider {
+    width: 24px;
+    height: 1px;
+    background: var(--pb-border);
+    margin: 8px 0 16px;
+    flex: none;
+  }
+  /* 竖排提示文字 */
+  .pb-hint-vertical {
+    margin-top: auto;
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+    font-size: 11px;
+    color: var(--pb-text-dim);
+    letter-spacing: 4px;
+    padding-bottom: 12px;
+    white-space: nowrap;
+    flex: none;
+  }
+  
+  /* 引擎选择弹窗 */
+  .pb-popover-menu {
+    position: fixed;
+    left: 64px;
+    top: 120px;
+    background: linear-gradient(135deg, rgba(10,18,32,.98), rgba(16,26,48,.98));
+    border: 1px solid var(--pb-accent);
+    border-radius: 10px;
+    padding: 6px;
+    z-index: 1000;
+    display: none;
+    flex-direction: column;
+    gap: 2px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.6), 0 0 15px rgba(34,211,238,.2);
+    animation: pbPopIn .15s cubic-bezier(.34,1.3,.64,1);
+  }
+  .pb-popover-menu.show { display: flex; }
+  .pb-popover-item {
+    padding: 8px 14px;
+    font-size: 12px;
+    color: var(--pb-text-dim);
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: ui-monospace, monospace;
+    white-space: nowrap;
+    transition: all .15s;
+  }
+  .pb-popover-item:hover {
+    background: rgba(34,211,238,.12);
+    color: var(--pb-accent);
+  }
+  .pb-popover-item.active {
+    background: rgba(34,211,238,.2);
+    color: #fff;
+  }
+
+  body::before {
+    content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(ellipse 70% 50% at 20% 0%, rgba(34,211,238,.10), transparent 60%),
+      radial-gradient(ellipse 70% 50% at 80% 100%, rgba(168,85,247,.10), transparent 60%),
+      linear-gradient(180deg, transparent 0, rgba(34,211,238,.015) 50%, transparent 100%),
+      repeating-linear-gradient(0deg, transparent 0 28px, rgba(34,211,238,.028) 28px 29px),
+      repeating-linear-gradient(90deg, transparent 0 28px, rgba(34,211,238,.028) 28px 29px);
+  }
+  body::after {
+    content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background: linear-gradient(180deg, transparent 0%, transparent 48%, rgba(34,211,238,.05) 49.5%, transparent 51%, transparent 100%);
+    background-size: 100% 200%; animation: pbScan 8s linear infinite; opacity: .6;
+  }
+  @keyframes pbScan { 0% { background-position: 0 -100%; } 100% { background-position: 0 100%; } }
+
+  .pb-shell, body > *:not(style):not(script) { position: relative; z-index: 1; }
+
+  /* 顶栏 */
+  .pb-topbar {
+    display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: wrap;
+    padding: 12px 16px; margin-bottom: 16px;
+    background: linear-gradient(135deg, rgba(10,18,32,.92), rgba(16,26,48,.88)) !important;
+    border: 1px solid var(--pb-border) !important; border-radius: 12px;
+    box-shadow: 0 0 0 1px rgba(34,211,238,.06) inset, 0 0 30px rgba(34,211,238,.08), 0 4px 16px rgba(0,0,0,.35);
+    backdrop-filter: blur(16px) saturate(1.4); -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  }
+  .pb-topbar-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: center; }
+
+  .pb-select {
+    height: 32px !important; padding: 0 30px 0 12px !important;
+    background: rgba(10,18,32,.8) !important; border: 1px solid var(--pb-border) !important;
+    border-radius: 8px !important; color: var(--pb-text) !important;
+    font-family: ui-monospace, monospace !important; font-size: 11.5px !important;
+    cursor: pointer !important; outline: none !important; appearance: none; -webkit-appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, var(--pb-accent) 50%), linear-gradient(135deg, var(--pb-accent) 50%, transparent 50%) !important;
+    background-position: calc(100% - 14px) 14px, calc(100% - 9px) 14px !important;
+    background-size: 5px 5px, 5px 5px !important; background-repeat: no-repeat !important;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .pb-select:hover, .pb-select:focus { border-color: var(--pb-accent) !important; box-shadow: 0 0 12px rgba(34,211,238,.3); }
+  .pb-select option { background: #0a1220 !important; color: var(--pb-text) !important; }
+
+  .pb-topbtn {
+    height: 32px !important; padding: 0 14px !important;
+    background: rgba(10,18,32,.8) !important; border: 1px solid var(--pb-border) !important;
+    border-radius: 8px !important; color: var(--pb-text) !important;
+    font-family: inherit !important; font-size: 12px !important; font-weight: 600 !important; letter-spacing: .5px;
+    cursor: pointer !important; display: inline-flex !important; align-items: center; gap: 6px;
+    transition: all .18s;
+  }
+  .pb-topbtn svg { width: 13px; height: 13px; }
+  .pb-topbtn:hover { background: rgba(34,211,238,.10) !important; border-color: var(--pb-accent) !important; color: var(--pb-accent) !important; box-shadow: 0 0 16px rgba(34,211,238,.35); }
+  .pb-topbtn.active {
+    background: linear-gradient(135deg, rgba(34,211,238,.28), rgba(168,85,247,.22)) !important;
+    border-color: var(--pb-accent) !important; color: #fff !important;
+    box-shadow: 0 0 0 1px rgba(34,211,238,.5) inset, 0 0 20px rgba(34,211,238,.55), 0 0 40px rgba(168,85,247,.25);
+  }
+
+  .pb-checkbox {
+    display: inline-flex !important; align-items: center; gap: 6px; height: 32px !important; padding: 0 12px !important;
+    background: rgba(10,18,32,.5) !important; border: 1px solid var(--pb-border) !important;
+    border-radius: 8px !important; color: var(--pb-text) !important; font-size: 12px !important;
+    cursor: pointer !important; transition: border-color .15s; user-select: none;
+  }
+  .pb-checkbox:hover { border-color: var(--pb-border-2) !important; }
+  .pb-checkbox input[type=checkbox] { margin: 0 !important; width: 14px; height: 14px; accent-color: var(--pb-accent); cursor: pointer; }
+
+  .pb-hint {
+    font-family: ui-monospace, monospace; font-size: 11px; color: var(--pb-text-dim); letter-spacing: .6px;
+    flex-basis: 100%; margin-top: 2px; display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .pb-hint::before { content: '▸'; color: var(--pb-accent); text-shadow: 0 0 8px var(--pb-accent-glow); }
+
+  /* 分组 section */
+  .pb-section {
+    margin-bottom: 14px; padding: 12px 14px;
+    background: linear-gradient(135deg, rgba(10,18,32,.55), rgba(16,26,48,.5)) !important;
+    border: 1px solid rgba(34,211,238,.10) !important; border-radius: 10px;
+  }
+  .pb-section-title {
+    display: flex; align-items: center; gap: 8px;
+    font-family: ui-monospace, monospace; font-size: 10.5px; letter-spacing: 2px; color: var(--pb-text-dim); text-transform: uppercase; margin-bottom: 10px;
+  }
+  .pb-section-title::before { content: ''; width: 3px; height: 12px; border-radius: 2px; background: linear-gradient(180deg, var(--pb-accent), var(--pb-accent-2)); box-shadow: 0 0 10px var(--pb-accent-glow); }
+  .pb-section-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(34,211,238,.30), transparent); }
+
+  .pb-btn-row { display: flex; flex-wrap: wrap; gap: 14px 12px; min-height: 32px; }
+
+  /* 抽屉包装器 & 按钮 */
+  .pb-group-wrap { position: relative; display: inline-block; transition: transform .12s; }
+  .pb-group-wrap > .pb-group-btn {
+    padding: 6px 10px !important; min-width: 24px; min-height: 32px;
+    display: flex !important; align-items: center !important; justify-content: center !important;
+    background: linear-gradient(135deg, rgba(10,18,32,.85), rgba(16,26,48,.85)) !important;
+    border: 1px solid var(--pb-border) !important; border-radius: 9px !important;
+    color: var(--pb-text) !important; font-family: inherit !important; cursor: pointer !important;
+    box-shadow: 0 0 0 1px rgba(34,211,238,.04) inset, 0 2px 8px rgba(0,0,0,.3);
+    transition: all .18s cubic-bezier(.34,1.2,.64,1); overflow: hidden; position: relative;
+  }
+  .pb-group-wrap > .pb-group-btn::before { content: ''; position: absolute; inset: 0; border-radius: 8px; background: linear-gradient(135deg, transparent 60%, rgba(34,211,238,.06) 100%); pointer-events: none; }
+  .pb-group-wrap.is-custom > .pb-group-btn { border-style: dashed !important; border-color: rgba(168,85,247,.42) !important; }
+  .pb-group-wrap:hover > .pb-group-btn {
+    border-color: var(--pb-accent) !important; color: var(--pb-accent) !important;
+    box-shadow: 0 0 0 1px rgba(34,211,238,.22) inset, 0 0 18px rgba(34,211,238,.35), 0 4px 14px rgba(0,0,0,.35);
+    transform: translateY(-1px);
+  }
+  .pb-group-wrap.in-manager > .pb-group-btn { cursor: grab !important; border-style: dashed !important; }
+  .pb-group-wrap.in-manager > .pb-group-btn:active { cursor: grabbing !important; }
+  .pb-group-wrap.dragging { opacity: .3; transform: scale(.92); filter: grayscale(.6); outline: 1px dashed rgba(34,211,238,.5); outline-offset: 2px; }
+  .pb-group-wrap.is-hidden > .pb-group-btn { opacity: .38; filter: grayscale(.9); }
+  .pb-group-wrap.is-hidden:hover > .pb-group-btn { opacity: .75; }
+
+  /* 拖拽落点 */
+  .pb-group-wrap.drag-over-left > .pb-group-btn, .pb-group-wrap.drag-over-right > .pb-group-btn {
+    border-color: var(--pb-accent) !important; background: linear-gradient(135deg, rgba(34,211,238,.20), rgba(168,85,247,.14)) !important;
+    box-shadow: 0 0 0 1px rgba(34,211,238,.45) inset, 0 0 18px rgba(34,211,238,.45) !important; transform: translateY(-1px);
+  }
+  .pb-group-wrap.drag-over-left, .pb-group-wrap.drag-over-right { z-index: 20; }
+  .pb-group-wrap.drag-over-left::after, .pb-group-wrap.drag-over-right::after {
+    content: ''; position: absolute; top: -7px; bottom: -7px; width: 4px; border-radius: 3px;
+    background: var(--pb-accent); box-shadow: 0 0 8px var(--pb-accent), 0 0 18px rgba(34,211,238,.9), 0 0 30px rgba(34,211,238,.5);
+    pointer-events: none; z-index: 21; animation: pbDropPulse .75s ease-in-out infinite;
+  }
+  .pb-group-wrap.drag-over-left::after { left: -9px; }
+  .pb-group-wrap.drag-over-right::after { right: -9px; }
+  @keyframes pbDropPulse { 0%, 100% { opacity: .6; transform: scaleY(.82); } 50% { opacity: 1; transform: scaleY(1); } }
+
+  .pb-group-badges {
+    position: absolute; top: -8px; right: -8px; display: flex; gap: 3px; z-index: 5;
+    opacity: 0; transform: scale(.85); transition: opacity .15s, transform .15s;
+  }
+  .pb-group-wrap.in-manager .pb-group-badges, .pb-group-wrap.in-manager:hover .pb-group-badges { opacity: 1; transform: scale(1); }
+  .pb-group-badge {
+    width: 20px !important; height: 20px !important; padding: 0 !important; margin: 0 !important;
+    border-radius: 50% !important; background: linear-gradient(135deg, #0a1220, #14202f) !important;
+    border: 1px solid var(--pb-accent) !important; color: var(--pb-accent) !important; cursor: pointer !important;
+    display: grid !important; place-items: center !important;
+    box-shadow: 0 0 10px rgba(34,211,238,.4), 0 2px 4px rgba(0,0,0,.4); transition: all .15s; font-family: inherit !important;
+  }
+  .pb-group-badge svg { width: 11px; height: 11px; }
+  .pb-group-badge:hover { background: linear-gradient(135deg, var(--pb-accent), var(--pb-accent-3)) !important; color: #06121a !important; box-shadow: 0 0 16px rgba(34,211,238,.8), 0 2px 6px rgba(0,0,0,.5); transform: scale(1.1); }
+  .pb-group-badge.danger { border-color: #f87171 !important; color: #f87171 !important; box-shadow: 0 0 10px rgba(248,113,113,.4), 0 2px 4px rgba(0,0,0,.4); }
+  .pb-group-badge.danger:hover { background: linear-gradient(135deg, #f87171, #ef4444) !important; color: #fff !important; box-shadow: 0 0 16px rgba(248,113,113,.8); }
+
+  /* popup */
+  #popupMenu {
+    position: fixed; display: none; padding: 14px;
+    background: linear-gradient(135deg, rgba(6,10,20,.98), rgba(16,26,48,.98)) !important;
+    border: 1px solid var(--pb-accent) !important; border-radius: 12px;
+    flex-wrap: wrap; gap: 16px 14px; overflow-y: auto; z-index: 2147483000;
+    box-shadow: 0 0 0 1px rgba(34,211,238,.12) inset, 0 0 30px rgba(34,211,238,.35), 0 0 80px rgba(168,85,247,.15), 0 12px 40px rgba(0,0,0,.65);
+    backdrop-filter: blur(20px) saturate(1.5); -webkit-backdrop-filter: blur(20px) saturate(1.5);
+    animation: pbPopIn .16s cubic-bezier(.34,1.3,.64,1);
+  }
+  #popupMenu::-webkit-scrollbar { width: 6px; }
+  #popupMenu::-webkit-scrollbar-track { background: rgba(34,211,238,.05); border-radius: 3px; }
+  #popupMenu::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--pb-accent), var(--pb-accent-2)); border-radius: 3px; }
+  #popupMenu::before { content: ''; position: absolute; inset: 0; border-radius: 12px; pointer-events: none; background: repeating-linear-gradient(0deg, transparent 0 3px, rgba(34,211,238,.015) 3px 4px); }
+  @keyframes pbPopIn { from { opacity: 0; transform: translateY(-4px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+  /* 公式按钮 */
+  .pb-fml-wrap { position: relative; display: inline-block; transition: transform .12s; }
+  .pb-fml-wrap > .pb-fml-btn {
+    padding: 5px 9px !important; min-width: 30px; min-height: 38px;
+    display: flex !important; align-items: center !important; justify-content: center !important;
+    background: linear-gradient(135deg, rgba(10,18,32,.94), rgba(16,26,48,.90)) !important;
+    border: 1px solid rgba(34,211,238,.34) !important; border-radius: 8px !important;
+    color: var(--pb-text) !important; font-family: inherit !important; cursor: pointer !important;
+    transition: all .16s cubic-bezier(.34,1.2,.64,1); position: relative;
+    box-shadow: 0 0 0 1px rgba(34,211,238,.06) inset, 0 1px 4px rgba(0,0,0,.35);
+  }
+  .pb-fml-wrap > .pb-fml-btn::before, .pb-fml-wrap > .pb-fml-btn::after {
+    content: ''; position: absolute; width: 6px; height: 6px; border: 1.5px solid rgba(34,211,238,.55);
+    pointer-events: none; transition: all .16s; z-index: 1;
+  }
+  .pb-fml-wrap > .pb-fml-btn::before { top: -1px; left: -1px; border-right: none; border-bottom: none; border-top-left-radius: 8px; }
+  .pb-fml-wrap > .pb-fml-btn::after { bottom: -1px; right: -1px; border-left: none; border-top: none; border-bottom-right-radius: 8px; }
+  .pb-fml-wrap > .pb-fml-btn:hover {
+    background: linear-gradient(135deg, rgba(34,211,238,.16), rgba(168,85,247,.10)) !important;
+    border-color: var(--pb-accent) !important; box-shadow: 0 0 0 1px rgba(34,211,238,.32) inset, 0 0 16px rgba(34,211,238,.5), 0 2px 10px rgba(0,0,0,.35); transform: translateY(-1px);
+  }
+  .pb-fml-wrap > .pb-fml-btn:hover::before, .pb-fml-wrap > .pb-fml-btn:hover::after { border-color: var(--pb-accent); width: 9px; height: 9px; filter: drop-shadow(0 0 4px rgba(34,211,238,.85)); }
+  .pb-fml-wrap.in-manager > .pb-fml-btn { cursor: grab !important; border-style: dashed !important; border-color: rgba(34,211,238,.45) !important; background: linear-gradient(135deg, rgba(10,18,32,.78), rgba(16,26,48,.72)) !important; }
+  .pb-fml-wrap.in-manager > .pb-fml-btn:hover { transform: none; box-shadow: 0 0 0 1px rgba(34,211,238,.10) inset, 0 0 8px rgba(34,211,238,.28); }
+  .pb-fml-wrap.in-manager > .pb-fml-btn::before, .pb-fml-wrap.in-manager > .pb-fml-btn::after { border-color: rgba(34,211,238,.35); }
+  .pb-fml-wrap.dragging { opacity: .3; transform: scale(.92); filter: grayscale(.6); outline: 1px dashed rgba(34,211,238,.5); outline-offset: 2px; }
+  .pb-fml-wrap.is-hidden > .pb-fml-btn { opacity: .35; filter: grayscale(.9); }
+  .pb-fml-wrap.drag-over-left, .pb-fml-wrap.drag-over-right { z-index: 20; }
+  .pb-fml-wrap.drag-over-left > .pb-fml-btn, .pb-fml-wrap.drag-over-right > .pb-fml-btn {
+    border-color: var(--pb-accent) !important; background: linear-gradient(135deg, rgba(34,211,238,.20), rgba(168,85,247,.14)) !important;
+    box-shadow: 0 0 0 1px rgba(34,211,238,.45) inset, 0 0 16px rgba(34,211,238,.5) !important;
+  }
+  .pb-fml-wrap.drag-over-left::after, .pb-fml-wrap.drag-over-right::after {
+    content: ''; position: absolute; top: -5px; bottom: -5px; width: 4px; border-radius: 3px;
+    background: var(--pb-accent); box-shadow: 0 0 8px var(--pb-accent), 0 0 18px rgba(34,211,238,.9), 0 0 30px rgba(34,211,238,.5);
+    pointer-events: none; z-index: 21; animation: pbDropPulse .75s ease-in-out infinite;
+  }
+  .pb-fml-wrap.drag-over-left::after { left: -7px; }
+  .pb-fml-wrap.drag-over-right::after { right: -7px; }
+  .pb-fml-badges { position: absolute; top: -7px; right: -7px; display: flex; gap: 2px; z-index: 4; }
+  .pb-fml-badge {
+    width: 16px !important; height: 16px !important; padding: 0 !important; margin: 0 !important;
+    border-radius: 50% !important; background: linear-gradient(135deg, #0a1220, #14202f) !important;
+    border: 1px solid var(--pb-accent) !important; color: var(--pb-accent) !important; cursor: pointer !important;
+    display: grid !important; place-items: center !important;
+    box-shadow: 0 0 8px rgba(34,211,238,.4), 0 1px 3px rgba(0,0,0,.4); transition: all .15s; font-family: inherit !important;
+  }
+  .pb-fml-badge svg { width: 8px; height: 8px; }
+  .pb-fml-badge:hover { background: linear-gradient(135deg, var(--pb-accent), var(--pb-accent-3)) !important; color: #06121a !important; box-shadow: 0 0 12px rgba(34,211,238,.85); transform: scale(1.15); }
+  .pb-fml-badge.danger { border-color: #f87171 !important; color: #f87171 !important; box-shadow: 0 0 8px rgba(248,113,113,.4), 0 1px 3px rgba(0,0,0,.4); }
+  .pb-fml-badge.danger:hover { background: linear-gradient(135deg, #f87171, #ef4444) !important; color: #fff !important; box-shadow: 0 0 12px rgba(248,113,113,.85); }
+
+  /* 弹窗 */
+  .pb-modal-mask { position: fixed; inset: 0; background: rgba(2,6,14,.75); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); z-index: 9000; display: none; align-items: center; justify-content: center; padding: 12px; }
+  .pb-modal-mask.show { display: flex; }
+  .pb-modal-card {
+    width: 100%; max-width: 660px; max-height: calc(100vh - 24px);
+    background: linear-gradient(135deg, rgba(10,18,32,.98), rgba(16,26,48,.98));
+    border: 1px solid var(--pb-accent); border-radius: 14px; display: flex; flex-direction: column; overflow: hidden;
+    box-shadow: 0 0 0 1px rgba(34,211,238,.15) inset, 0 0 40px rgba(34,211,238,.3), 0 20px 60px rgba(0,0,0,.7);
+    animation: pbPopIn .2s cubic-bezier(.34,1.3,.64,1);
+  }
+  .pb-modal-head { padding: 12px 16px; border-bottom: 1px solid var(--pb-border); display: flex; align-items: center; gap: 10px; background: rgba(34,211,238,.04); }
+  .pb-modal-title { flex: 1; font-size: 14px; font-weight: 600; color: var(--pb-text); font-family: ui-monospace, monospace; letter-spacing: .5px; }
+  .pb-modal-close { width: 28px !important; height: 28px !important; padding: 0 !important; border-radius: 8px !important; border: 1px solid var(--pb-border) !important; background: transparent !important; color: var(--pb-text-dim) !important; cursor: pointer !important; font-family: inherit !important; display: grid !important; place-items: center !important; transition: .15s; }
+  .pb-modal-close:hover { background: rgba(248,113,113,.15) !important; border-color: #f87171 !important; color: #fca5a5 !important; }
+  .pb-modal-body { flex: 1; overflow-y: auto; padding: 12px 14px; }
+
+  /* 编辑器 */
+  .pb-input, .pb-select2 { width: 100%; padding: 7px 10px !important; background: rgba(10,18,32,.75) !important; border: 1px solid var(--pb-border) !important; border-radius: 8px !important; color: var(--pb-text) !important; font-family: inherit !important; font-size: 13px !important; box-sizing: border-box; outline: none !important; transition: border-color .15s, box-shadow .15s; }
+  .pb-input:focus, .pb-select2:focus { border-color: var(--pb-accent) !important; box-shadow: 0 0 0 3px rgba(34,211,238,.15); }
+  .pb-label { display: block; font-size: 11.5px; color: var(--pb-text-dim); margin-bottom: 5px; letter-spacing: .3px; }
+  .pb-btn { padding: 6px 14px !important; border-radius: 8px !important; border: 1px solid var(--pb-border) !important; background: rgba(34,211,238,.08) !important; color: var(--pb-text) !important; font-family: inherit !important; font-size: 12.5px !important; cursor: pointer !important; transition: .15s; }
+  .pb-btn:hover { background: rgba(34,211,238,.18) !important; border-color: var(--pb-accent) !important; color: var(--pb-accent) !important; }
+  .pb-btn.primary { background: linear-gradient(135deg, var(--pb-accent), var(--pb-accent-2)) !important; border-color: var(--pb-accent) !important; color: #fff !important; box-shadow: 0 0 14px rgba(34,211,238,.4); }
+  .pb-btn.primary:hover { filter: brightness(1.1); box-shadow: 0 0 20px rgba(34,211,238,.6); }
+  .pb-btn.danger { border-color: rgba(248,113,113,.5) !important; color: #fca5a5 !important; background: rgba(248,113,113,.08) !important; }
+  .pb-btn.danger:hover { background: rgba(248,113,113,.18) !important; border-color: #f87171 !important; }
+
+  .pb-group-wrap.drag-over-formula > .pb-group-btn {
+    border-color: #a855f7 !important; background: linear-gradient(135deg, rgba(168,85,247,.22), rgba(34,211,238,.14)) !important;
+    box-shadow: 0 0 0 1px rgba(168,85,247,.5) inset, 0 0 20px rgba(168,85,247,.55) !important; transform: translateY(-1px);
+  }
+  #commonButtons.drag-over-formula, #templateGroupButtons.drag-over-formula, #groupButtons.drag-over-formula {
+    outline: 2px dashed #a855f7; outline-offset: 4px; border-radius: 8px; background: rgba(168,85,247,.06);
+  }
+</style>
+</head>
+<body>
+
+<!-- 侧边栏 -->
+<div class="pb-sidebar">
+  <button id="pbOpenManager" class="pb-side-btn" title="切换管理模式 (MANAGE)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5v.2a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1h.2a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>
+    </svg>
+  </button>
+  
+  <button id="pbShowHiddenBtn" class="pb-side-btn" title="显示/隐藏 隐藏项">
+    <svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>
+    </svg>
+    <svg class="icon-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+      <path d="M3 3l18 18"/><path d="M10.6 6.1a10.5 10.5 0 0 1 1.4-.1c6.5 0 10 7 10 7a17.3 17.3 0 0 1-3.6 4.6"/><path d="M6.4 7.8A17.4 17.4 0 0 0 2 12s3.5 7 10 7a10 10 0 0 0 4.2-.9"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/>
+    </svg>
+  </button>
+  
+  <div class="pb-side-divider"></div>
+  
+  <button id="pbEngineBtn" class="pb-side-btn" title="点击切换渲染引擎">
+    <span id="pbEngineText" style="font-family:ui-monospace, monospace; font-weight:bold; font-size:15px; letter-spacing:0;">Ki</span>
+  </button>
+  
+  <button id="pbResetOrder" class="pb-side-btn" title="复原排序（自定义层级保留）">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/>
+    </svg>
+  </button>
+  
+  <div class="pb-hint-vertical" id="pbManagerHint">点击插入</div>
+</div>
+
+<!-- 引擎选择弹窗 -->
+<div id="pbEngineMenu" class="pb-popover-menu">
+  <div class="pb-popover-item active" data-val="katex-inline">KaTeX · Inline</div>
+  <div class="pb-popover-item" data-val="katex-display">KaTeX · Display</div>
+  <div class="pb-popover-item" data-val="mathjax-inline">MathJax · Inline</div>
+  <div class="pb-popover-item" data-val="mathjax-display">MathJax · Display</div>
+</div>
+<!-- 模板组 -->
+<div class="pb-section">
+  <div class="pb-section-title">Templates · 模板</div>
+  <div id="templateGroupButtons" class="pb-btn-row"></div>
+</div>
+
+<!-- 公式组 -->
+<div class="pb-section">
+  <div class="pb-section-title">Formula Groups · 公式组</div>
+  <div id="groupButtons" class="pb-btn-row"></div>
+</div>
+
+<!-- 常用 -->
+<div class="pb-section">
+  <div class="pb-section-title">Common · 常用</div>
+  <div id="commonButtons" class="pb-btn-row"></div>
+</div>
+
+<!-- popup -->
+<div id="popupMenu"></div>
+
+<!-- 添加常用公式弹窗 -->
+<div class="pb-modal-mask" id="pbAddCommonMask">
+  <div class="pb-modal-card" style="max-width: 500px;">
+    <div class="pb-modal-head">
+      <div class="pb-modal-title">+ ADD · 添加常用公式</div>
+      <button class="pb-modal-close" id="pbAddCommonClose">✕</button>
+    </div>
+    <div class="pb-modal-body">
+      <div style="margin-bottom: 12px;">
+        <label class="pb-label">LaTeX 显示公式</label>
+        <input class="pb-input" id="pbAddCommonLatex" type="text" placeholder="\frac{a}{b}" style="font-family: ui-monospace, monospace;">
+      </div>
+      <div style="margin-bottom: 12px;">
+        <label class="pb-label">插入文本（留空则与显示相同）</label>
+        <input class="pb-input" id="pbAddCommonInsert" type="text" placeholder="\frac{}{}" style="font-family: ui-monospace, monospace;">
+      </div>
+      <div style="padding: 12px; background: rgba(34,211,238,.04); border: 1px dashed var(--pb-border); border-radius: 8px; font-size: 12px; min-height: 44px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+        <span style="color: var(--pb-text-dim);">预览：</span>
+        <span id="pbAddCommonPreview" style="display: inline-block; min-height: 20px;"></span>
+      </div>
+    </div>
+    <div style="padding: 10px 14px; border-top: 1px solid var(--pb-border); display: flex; gap: 8px; justify-content: flex-end;">
+      <button class="pb-btn" id="pbAddCommonCancel">取消</button>
+      <button class="pb-btn primary" id="pbAddCommonSave">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================= -->
+<!-- ↓↓↓ 第二段从这里开始：粘贴 <script> ... </script></body></html> ↓↓↓ -->
+
+
+<script>
+/* =============================================================================
+ *  1. 数据定义 (templates, groups, BUILTIN_COMMONS)
+ * ============================================================================= */
+const templates = {
+  "algebra": {
+    icon: '\\sqrt{a^2+b^2}',
+    formulas: [
+      { latex: '\\left(x-1\\right)\\left(x+3\\right)', insertText: '\\left(x-1\\right)\\left(x+3\\right)' },
+      { latex: '\\sqrt{a^2+b^2}', insertText: '\\sqrt{a^2+b^2}' },
+      { latex: '\\left(\\frac{a}{b}\\right)^{n}=\\frac{a^{n}}{b^{n}}', insertText: '\\left(\\frac{a}{b}\\right)^{n}=\\frac{a^{n}}{b^{n}}' },
+      { latex: '\\frac{a}{b}\\pm\\frac{c}{d}=\\frac{ad\\pm bc}{bd}', insertText: '\\frac{a}{b}\\pm\\frac{c}{d}=\\frac{ad\\pm bc}{bd}' },
+      { latex: '\\frac{x^{2}}{a^{2}}-\\frac{y^{2}}{b^{2}}=1', insertText: '\\frac{x^{2}}{a^{2}}-\\frac{y^{2}}{b^{2}}=1' },
+      { latex: '\\frac{1}{\\sqrt{a}}=\\frac{\\sqrt{a}}{a},a\\ge0', insertText: '\\frac{1}{\\sqrt{a}}=\\frac{\\sqrt{a}}{a},a\\ge0' },
+      { latex: '\\sqrt[n]{a^{n}}=\\left(\\sqrt[n]{a}\\right)^{n}', insertText: '\\sqrt[n]{a^{n}}=\\left(\\sqrt[n]{a}\\right)^{n}' },
+      { latex: 'x={-b\\pm\\sqrt{b^2-4ac}\\over2a}', insertText: 'x={-b\\pm\\sqrt{b^2-4ac}\\over2a}' },
+      { latex: 'y-y_{1}=k\\left(x-x_{1}\\right)', insertText: 'y-y_{1}=k\\left(x-x_{1}\\right)' },
+      { latex: '\\left\\{\\begin{matrix}x=a+r\\text{cos}\\theta\\\\y=b+r\\text{sin}\\theta\\end{matrix}\\right.', insertText: '\\left\\{\\begin{matrix}x=a+r\\text{cos}\\theta\\\\y=b+r\\text{sin}\\theta\\end{matrix}\\right.' },
+      { latex: '\\begin{array}{l}\\text{For an equation of the form: }x^{3}-1=0\\\\\\text{Let }\\omega=\\frac{-1+\\sqrt{3}i}{2}\\\\x_{1}=1,\\quad x_{2}=\\omega=\\frac{-1+\\sqrt{3}i}{2}\\\\x_{3}=\\omega^{2}=\\frac{-1-\\sqrt{3}i}{2}\\end{array}', insertText: '\\begin{array}{l}\\text{For an equation of the form: }x^{3}-1=0\\\\\\text{Let }\\omega=\\frac{-1+\\sqrt{3}i}{2}\\\\x_{1}=1,\\quad x_{2}=\\omega=\\frac{-1+\\sqrt{3}i}{2}\\\\x_{3}=\\omega^{2}=\\frac{-1-\\sqrt{3}i}{2}\\end{array}' },
+      { latex: '\\begin{array}{l}ax^2+bx+c=0\\\\\\Delta=b^2-4ac\\\\\\begin{cases}\\Delta>0&\\text{: two distinct real roots}\\\\\\Delta=0&\\text{: two equal real roots}\\\\\\Delta<0&\\text{: no real roots}\\end{cases}\\end{array}', insertText: '\\begin{array}{l}ax^2+bx+c=0\\\\\\Delta=b^2-4ac\\\\\\begin{cases}\\Delta>0&\\text{: two distinct real roots}\\\\\\Delta=0&\\text{: two equal real roots}\\\\\\Delta<0&\\text{: no real roots}\\end{cases}\\end{array}' },
+      { latex: '\\begin{array}{l}ax^2+bx+c=0\\\\\\Delta=b^2-4ac\\\\x_{1,2}=\\dfrac{-b\\pm\\sqrt{b^2-4ac}}{2a}\\\\x_1+x_2=-\\dfrac{b}{a}\\\\x_1x_2=\\dfrac{c}{a}\\end{array}', insertText: '\\begin{array}{l}ax^2+bx+c=0\\\\\\Delta=b^2-4ac\\\\x_{1,2}=\\dfrac{-b\\pm\\sqrt{b^2-4ac}}{2a}\\\\x_1+x_2=-\\dfrac{b}{a}\\\\x_1x_2=\\dfrac{c}{a}\\end{array}' }
+    ]
+  },
+  "geometry": {
+    icon: '\\Delta ABC',
+    formulas: [
+      { latex: '\\Delta ABC', insertText: '\\Delta ABC' },
+      { latex: 'a\\parallel c,b\\parallel c\\Rightarrow a\\parallel b', insertText: 'a\\parallel c,b\\parallel c\\Rightarrow a\\parallel b' },
+      { latex: 'l\\perp\\beta,l\\subset\\alpha\\Rightarrow\\alpha\\perp\\beta', insertText: 'l\\perp\\beta,l\\subset\\alpha\\Rightarrow\\alpha\\perp\\beta' },
+      { latex: '\\left.\\begin{matrix}a\\perp\\alpha\\\\b\\perp\\alpha\\end{matrix}\\right\\}\\Rightarrow a\\parallel b', insertText: '\\left.\\begin{matrix}a\\perp\\alpha\\\\b\\perp\\alpha\\end{matrix}\\right\\}\\Rightarrow a\\parallel b' },
+      { latex: 'P\\in\\alpha,P\\in\\beta,\\alpha\\cap\\beta=l\\Rightarrow P\\in l', insertText: 'P\\in\\alpha,P\\in\\beta,\\alpha\\cap\\beta=l\\Rightarrow P\\in l' },
+      { latex: '\\alpha\\perp\\beta,\\alpha\\cap\\beta=l,a\\subset\\alpha,a\\perp l\\Rightarrow a\\perp\\beta', insertText: '\\alpha\\perp\\beta,\\alpha\\cap\\beta=l,a\\subset\\alpha,a\\perp l\\Rightarrow a\\perp\\beta' },
+      { latex: '\\left.\\begin{matrix}a\\subset\\beta,b\\subset\\beta,a\\cap b=P\\\\a\\parallel\\partial,b\\parallel\\partial\\end{matrix}\\right\\}\\Rightarrow\\beta\\parallel\\alpha', insertText: '\\left.\\begin{matrix}a\\subset\\beta,b\\subset\\beta,a\\cap b=P\\\\a\\parallel\\partial,b\\parallel\\partial\\end{matrix}\\right\\}\\Rightarrow\\beta\\parallel\\alpha' },
+      { latex: '\\alpha\\parallel\\beta,\\gamma\\cap\\alpha=a,\\gamma\\cap\\beta=b\\Rightarrow a\\parallel b', insertText: '\\alpha\\parallel\\beta,\\gamma\\cap\\alpha=a,\\gamma\\cap\\beta=b\\Rightarrow a\\parallel b' },
+      { latex: 'A\\in l,B\\in l,A\\in\\alpha,B\\in\\alpha\\Rightarrow l\\subset\\alpha', insertText: 'A\\in l,B\\in l,A\\in\\alpha,B\\in\\alpha\\Rightarrow l\\subset\\alpha' },
+      { latex: '\\left.\\begin{matrix}m\\subset\\alpha,n\\subset\\alpha,m\\cap n=P\\\\a\\perp m,a\\perp n\\end{matrix}\\right\\}\\Rightarrow a\\perp\\alpha', insertText: '\\left.\\begin{matrix}m\\subset\\alpha,n\\subset\\alpha,m\\cap n=P\\\\a\\perp m,a\\perp n\\end{matrix}\\right\\}\\Rightarrow a\\perp\\alpha' },
+      { latex: '\\text{In a right triangle, with legs }a\\text{ and }b\\text{ and hypotenuse }c,\\quad a^2+b^2=c^2', insertText: '\\text{In a right triangle, with legs }a\\text{ and }b\\text{ and hypotenuse }c,\\quad a^2+b^2=c^2' }
+    ]
+  },
+  "inequality": {
+    icon: 'a>b',
+    formulas: [
+      { latex: 'a>b,b>c\\Rightarrow a>c', insertText: 'a>b,b>c\\Rightarrow a>c' },
+      { latex: 'a>b,c>d\\Rightarrow a+c>b+d', insertText: 'a>b,c>d\\Rightarrow a+c>b+d' },
+      { latex: 'a>b>0,c>d>0\\Rightarrow ac>bd', insertText: 'a>b>0,c>d>0\\Rightarrow ac>bd' },
+      { latex: '\\begin{array}{c}a\\gt b,c\\gt 0\\Rightarrow ac\\gt bc\\\\a\\gt b,c\\lt 0\\Rightarrow ac\\lt bc\\end{array}', insertText: '\\begin{array}{c}a\\gt b,c\\gt 0\\Rightarrow ac\\gt bc\\\\a\\gt b,c\\lt 0\\Rightarrow ac\\lt bc\\end{array}' },
+      { latex: '\\left|a-b\\right|\\geqslant\\left|a\\right|-\\left|b\\right|', insertText: '\\left|a-b\\right|\\geqslant\\left|a\\right|-\\left|b\\right|' },
+      { latex: '-\\left|a\\right|\\leqslant a\\leqslant\\left|a\\right|', insertText: '-\\left|a\\right|\\leqslant a\\leqslant\\left|a\\right|' },
+      { latex: '\\left|a\\right|\\leqslant b\\Rightarrow-b\\leqslant a\\leqslant\\left|b\\right|', insertText: '\\left|a\\right|\\leqslant b\\Rightarrow-b\\leqslant a\\leqslant\\left|b\\right|' },
+      { latex: '\\left|a+b\\right|\\leqslant\\left|a\\right|+\\left|b\\right|', insertText: '\\left|a+b\\right|\\leqslant\\left|a\\right|+\\left|b\\right|' },
+      { latex: '\\begin{array}{c}a\\gt b\\gt 0,\\quad n\\in\\mathbb{N},\\quad n\\gt 1\\\\\\Rightarrow\\ a^{n}\\gt b^{n},\\quad\\sqrt[n]{a}\\gt\\sqrt[n]{b}\\end{array}', insertText: '\\begin{array}{c}a\\gt b\\gt 0,\\quad n\\in\\mathbb{N},\\quad n\\gt 1\\\\\\Rightarrow\\ a^{n}\\gt b^{n},\\quad\\sqrt[n]{a}\\gt\\sqrt[n]{b}\\end{array}' },
+      { latex: '\\left(\\sum_{k=1}^n a_k b_k\\right)^{\\!\\!2}\\leq\\left(\\sum_{k=1}^n a_k^2\\right)\\left(\\sum_{k=1}^n b_k^2\\right)', insertText: '\\left(\\sum_{k=1}^n a_k b_k\\right)^{\\!\\!2}\\leq\\left(\\sum_{k=1}^n a_k^2\\right)\\left(\\sum_{k=1}^n b_k^2\\right)' },
+      { latex: '\\begin{aligned}&a,b\\in\\mathbb{R}^+\\\\&\\Rightarrow\\frac{a+b}{2}\\geq\\sqrt{ab}\\\\&\\text{Equality holds if and only if }a=b\\end{aligned}', insertText: '\\begin{aligned}&a,b\\in\\mathbb{R}^+\\\\&\\Rightarrow\\frac{a+b}{2}\\geq\\sqrt{ab}\\\\&\\text{Equality holds if and only if }a=b\\end{aligned}' },
+      { latex: '\\begin{aligned}&\\text{Let }a,b\\in\\mathbb{R},\\text{ then}\\\\&\\quad a^2+b^2\\ge 2ab\\\\&\\text{with equality if and only if }a=b.\\end{aligned}', insertText: '\\begin{aligned}&\\text{Let }a,b\\in\\mathbb{R},\\text{ then}\\\\&\\quad a^2+b^2\\ge 2ab\\\\&\\text{with equality if and only if }a=b.\\end{aligned}' },
+      { latex: '\\begin{array}{c}H_{n}=\\frac{n}{\\sum\\limits_{i=1}^{n}\\frac{1}{x_{i}}}=\\frac{n}{\\frac{1}{x_{1}}+\\frac{1}{x_{2}}+\\cdots+\\frac{1}{x_{n}}}\\\\G_{n}=\\sqrt[n]{\\prod\\limits_{i=1}^{n}x_{i}}=\\sqrt[n]{x_{1}x_{2}\\cdots x_{n}}\\\\A_{n}=\\frac{1}{n}\\sum\\limits_{i=1}^{n}x_{i}=\\frac{x_{1}+x_{2}+\\cdots+x_{n}}{n}\\\\Q_{n}=\\sqrt{\\sum\\limits_{i=1}^{n}x_{i}^{2}}=\\sqrt{\\frac{x_{1}^{2}+x_{2}^{2}+\\cdots+x_{n}^{2}}{n}}\\\\H_{n}\\leq G_{n}\\leq A_{n}\\leq Q_{n}\\end{array}', insertText: '\\begin{array}{c}H_{n}=\\frac{n}{\\sum\\limits_{i=1}^{n}\\frac{1}{x_{i}}}=\\frac{n}{\\frac{1}{x_{1}}+\\frac{1}{x_{2}}+\\cdots+\\frac{1}{x_{n}}}\\\\G_{n}=\\sqrt[n]{\\prod\\limits_{i=1}^{n}x_{i}}=\\sqrt[n]{x_{1}x_{2}\\cdots x_{n}}\\\\A_{n}=\\frac{1}{n}\\sum\\limits_{i=1}^{n}x_{i}=\\frac{x_{1}+x_{2}+\\cdots+x_{n}}{n}\\\\Q_{n}=\\sqrt{\\sum\\limits_{i=1}^{n}x_{i}^{2}}=\\sqrt{\\frac{x_{1}^{2}+x_{2}^{2}+\\cdots+x_{n}^{2}}{n}}\\\\H_{n}\\leq G_{n}\\leq A_{n}\\leq Q_{n}\\end{array}' }
+    ]
+  },
+  "integration": {
+    icon: '\\frac{\\partial y}{\\partial x}',
+    formulas: [
+      { latex: '\\frac{\\mathrm{d}}{\\mathrm{d}x}x^n=nx^{n-1}', insertText: '\\frac{\\mathrm{d}}{\\mathrm{d}x}x^n=nx^{n-1}' },
+      { latex: '\\frac{\\mathrm{d}}{\\mathrm{d}x}e^{ax}=a\\,e^{ax}', insertText: '\\frac{\\mathrm{d}}{\\mathrm{d}x}e^{ax}=a\\,e^{ax}' },
+      { latex: '\\frac{\\mathrm{d}}{\\mathrm{d}x}\\ln(x)=\\frac{1}{x}', insertText: '\\frac{\\mathrm{d}}{\\mathrm{d}x}\\ln(x)=\\frac{1}{x}' },
+      { latex: '\\frac{\\mathrm{d}}{\\mathrm{d}x}\\sin x=\\cos x', insertText: '\\frac{\\mathrm{d}}{\\mathrm{d}x}\\sin x=\\cos x' },
+      { latex: '\\frac{\\mathrm{d}}{\\mathrm{d}x}\\cos x=-\\sin x', insertText: '\\frac{\\mathrm{d}}{\\mathrm{d}x}\\cos x=-\\sin x' },
+      { latex: '\\int k\\mathrm{d}x=kx+C', insertText: '\\int k\\mathrm{d}x=kx+C' },
+      { latex: '\\frac{\\mathrm{d}}{\\mathrm{d}x}\\tan x=\\sec^2x', insertText: '\\frac{\\mathrm{d}}{\\mathrm{d}x}\\tan x=\\sec^2x' },
+      { latex: '\\frac{\\mathrm{d}}{\\mathrm{d}x}\\cot x=-\\csc^2x', insertText: '\\frac{\\mathrm{d}}{\\mathrm{d}x}\\cot x=-\\csc^2x' },
+      { latex: '\\int\\frac{1}{x}\\mathrm{d}x=\\ln\\left|x\\right|+C', insertText: '\\int\\frac{1}{x}\\mathrm{d}x=\\ln\\left|x\\right|+C' },
+      { latex: '\\int\\frac{1}{\\sqrt{1-x^{2}}}\\mathrm{d}x=\\arcsin x+C', insertText: '\\int\\frac{1}{\\sqrt{1-x^{2}}}\\mathrm{d}x=\\arcsin x+C' },
+      { latex: '\\int\\frac{1}{1+x^{2}}\\mathrm{d}x=\\arctan x+C', insertText: '\\int\\frac{1}{1+x^{2}}\\mathrm{d}x=\\arctan x+C' },
+      { latex: '\\int u\\frac{\\mathrm{d}v}{\\mathrm{d}x}\\,\\mathrm{d}x=uv-\\int\\frac{\\mathrm{d}u}{\\mathrm{d}x}v\\,\\mathrm{d}x', insertText: '\\int u\\frac{\\mathrm{d}v}{\\mathrm{d}x}\\,\\mathrm{d}x=uv-\\int\\frac{\\mathrm{d}u}{\\mathrm{d}x}v\\,\\mathrm{d}x' },
+      { latex: 'f(x)=\\frac{1}{\\sqrt{2\\pi}}\\int_{-\\infty}^{\\infty}\\hat f(\\xi)e^{i\\xi x}\\mathrm{d}\\xi', insertText: 'f(x)=\\frac{1}{\\sqrt{2\\pi}}\\int_{-\\infty}^{\\infty}\\hat f(\\xi)e^{i\\xi x}\\mathrm{d}\\xi' },
+      { latex: '\\int x^{\\mu}\\mathrm{d}x=\\frac{x^{\\mu+1}}{\\mu+1}+C\\quad\\left(\\mu\\neq-1\\right)', insertText: '\\int x^{\\mu}\\mathrm{d}x=\\frac{x^{\\mu+1}}{\\mu+1}+C\\quad\\left(\\mu\\neq-1\\right)' }
+    ]
+  },
+  "matrix": {
+    icon: '\\begin{pmatrix}1&0\\\\0&1\\end{pmatrix}',
+    formulas: [
+      { latex: '\\begin{pmatrix}1&0\\\\0&1\\end{pmatrix}', insertText: '\\begin{pmatrix}1&0\\\\0&1\\end{pmatrix}' },
+      { latex: '\\begin{pmatrix}a_{11}&a_{12}&a_{13}\\\\a_{21}&a_{22}&a_{23}\\\\a_{31}&a_{32}&a_{33}\\end{pmatrix}', insertText: '\\begin{pmatrix}a_{11}&a_{12}&a_{13}\\\\a_{21}&a_{22}&a_{23}\\\\a_{31}&a_{32}&a_{33}\\end{pmatrix}' },
+      { latex: '\\begin{pmatrix}a_{11}&\\cdots&a_{1n}\\\\\\vdots&\\ddots&\\vdots\\\\a_{m1}&\\cdots&a_{mn}\\end{pmatrix}', insertText: '\\begin{pmatrix}a_{11}&\\cdots&a_{1n}\\\\\\vdots&\\ddots&\\vdots\\\\a_{m1}&\\cdots&a_{mn}\\end{pmatrix}' },
+      { latex: 'O=\\begin{bmatrix}0&0&\\cdots&0\\\\0&0&\\cdots&0\\\\\\vdots&\\vdots&\\ddots&\\vdots\\\\0&0&\\cdots&0\\end{bmatrix}', insertText: 'O=\\begin{bmatrix}0&0&\\cdots&0\\\\0&0&\\cdots&0\\\\\\vdots&\\vdots&\\ddots&\\vdots\\\\0&0&\\cdots&0\\end{bmatrix}' },
+      { latex: 'A_{m\\times n}=\\begin{bmatrix}a_{11}&a_{12}&\\cdots&a_{1n}\\\\a_{21}&a_{22}&\\cdots&a_{2n}\\\\\\vdots&\\vdots&\\ddots&\\vdots\\\\a_{m1}&a_{m2}&\\cdots&a_{mn}\\end{bmatrix}=\\left[a_{ij}\\right]', insertText: 'A_{m\\times n}=\\begin{bmatrix}a_{11}&a_{12}&\\cdots&a_{1n}\\\\a_{21}&a_{22}&\\cdots&a_{2n}\\\\\\vdots&\\vdots&\\ddots&\\vdots\\\\a_{m1}&a_{m2}&\\cdots&a_{mn}\\end{bmatrix}=\\left[a_{ij}\\right]' },
+      { latex: '\\begin{array}{c}A=\\left[a_{ij}\\right]_{m\\times n},B=\\left[b_{ij}\\right]_{n\\times s}\\\\c_{ij}=\\sum\\limits_{k=1}^{n}a_{ik}b_{kj}\\\\C=AB=\\left[c_{ij}\\right]_{m\\times s}=\\left[\\sum\\limits_{k=1}^{n}a_{ik}b_{kj}\\right]_{m\\times s}\\end{array}', insertText: '\\begin{array}{c}A=\\left[a_{ij}\\right]_{m\\times n},B=\\left[b_{ij}\\right]_{n\\times s}\\\\c_{ij}=\\sum\\limits_{k=1}^{n}a_{ik}b_{kj}\\\\C=AB=\\left[c_{ij}\\right]_{m\\times s}=\\left[\\sum\\limits_{k=1}^{n}a_{ik}b_{kj}\\right]_{m\\times s}\\end{array}' }
+    ]
+  },
+  "triangle": {
+    icon: 'e^{i\\theta}',
+    formulas: [
+      { latex: 'e^{i\\theta}', insertText: 'e^{i\\theta}' },
+      { latex: '\\text{sin}^{2}\\frac{\\alpha}{2}=\\frac{1-\\text{cos}\\alpha}{2}', insertText: '\\text{sin}^{2}\\frac{\\alpha}{2}=\\frac{1-\\text{cos}\\alpha}{2}' },
+      { latex: '\\text{cos}^{2}\\frac{\\alpha}{2}=\\frac{1+\\text{cos}\\alpha}{2}', insertText: '\\text{cos}^{2}\\frac{\\alpha}{2}=\\frac{1+\\text{cos}\\alpha}{2}' },
+      { latex: '\\text{tan}\\frac{\\alpha}{2}=\\frac{\\text{sin}\\alpha}{1+\\text{cos}\\alpha}', insertText: '\\text{tan}\\frac{\\alpha}{2}=\\frac{\\text{sin}\\alpha}{1+\\text{cos}\\alpha}' },
+      { latex: '\\sin\\alpha+\\sin\\beta=2\\sin\\frac{\\alpha+\\beta}{2}\\cos\\frac{\\alpha-\\beta}{2}', insertText: '\\sin\\alpha+\\sin\\beta=2\\sin\\frac{\\alpha+\\beta}{2}\\cos\\frac{\\alpha-\\beta}{2}' },
+      { latex: '\\sin\\alpha-\\sin\\beta=2\\cos\\frac{\\alpha+\\beta}{2}\\sin\\frac{\\alpha-\\beta}{2}', insertText: '\\sin\\alpha-\\sin\\beta=2\\cos\\frac{\\alpha+\\beta}{2}\\sin\\frac{\\alpha-\\beta}{2}' },
+      { latex: '\\cos\\alpha+\\cos\\beta=2\\cos\\frac{\\alpha+\\beta}{2}\\cos\\frac{\\alpha-\\beta}{2}', insertText: '\\cos\\alpha+\\cos\\beta=2\\cos\\frac{\\alpha+\\beta}{2}\\cos\\frac{\\alpha-\\beta}{2}' },
+      { latex: '\\cos\\alpha-\\cos\\beta=-2\\sin\\frac{\\alpha+\\beta}{2}\\sin\\frac{\\alpha-\\beta}{2}', insertText: '\\cos\\alpha-\\cos\\beta=-2\\sin\\frac{\\alpha+\\beta}{2}\\sin\\frac{\\alpha-\\beta}{2}' },
+      { latex: 'a^{2}=b^{2}+c^{2}-2bc\\cos A', insertText: 'a^{2}=b^{2}+c^{2}-2bc\\cos A' },
+      { latex: '\\frac{\\sin A}{a}=\\frac{\\sin B}{b}=\\frac{\\sin C}{c}=\\frac{1}{2R}', insertText: '\\frac{\\sin A}{a}=\\frac{\\sin B}{b}=\\frac{\\sin C}{c}=\\frac{1}{2R}' },
+      { latex: '\\sin\\left(\\frac{\\pi}{2}-\\alpha\\right)=\\cos\\alpha', insertText: '\\sin\\left(\\frac{\\pi}{2}-\\alpha\\right)=\\cos\\alpha' },
+      { latex: '\\sin\\left(\\frac{\\pi}{2}+\\alpha\\right)=\\cos\\alpha', insertText: '\\sin\\left(\\frac{\\pi}{2}+\\alpha\\right)=\\cos\\alpha' }
+    ]
+  },
+  "statistics": {
+    icon: 'C_{r}^{n}',
+    formulas: [
+      { latex: 'C_{r}^{n}', insertText: 'C_{r}^{n}' },
+      { latex: '\\frac{n!}{r!(n-r)!}', insertText: '\\frac{n!}{r!(n-r)!}' },
+      { latex: '\\sum_{i=1}^{n}{X_i}', insertText: '\\sum_{i=1}^{n}{X_i}' },
+      { latex: '\\sum_{i=1}^{n}{X_i^2}', insertText: '\\sum_{i=1}^{n}{X_i^2}' },
+      { latex: 'X_1,\\cdots,X_n', insertText: 'X_1,\\cdots,X_n' },
+      { latex: '\\frac{x-\\mu}{\\sigma}', insertText: '\\frac{x-\\mu}{\\sigma}' },
+      { latex: '\\sum_{i=1}^{n}{(X_i-\\overline{X})^2}', insertText: '\\sum_{i=1}^{n}{(X_i-\\overline{X})^2}' },
+      { latex: '\\begin{array}{c}\\text{If }P(AB)=P(A)P(B),\\\\\\text{then }P(A\\mid B)=P(A)\\end{array}', insertText: '\\begin{array}{c}\\text{If }P(AB)=P(A)P(B),\\\\\\text{then }P(A\\mid B)=P(A)\\end{array}' },
+      { latex: 'P(E)={n\\choose k}p^k(1-p)^{n-k}', insertText: 'P(E)={n\\choose k}p^k(1-p)^{n-k}' },
+      { latex: 'P\\left(A\\right)=\\lim\\limits_{n\\to\\infty}f_{n}\\left(A\\right)', insertText: 'P\\left(A\\right)=\\lim\\limits_{n\\to\\infty}f_{n}\\left(A\\right)' },
+      { latex: 'P\\left(\\bigcup\\limits_{i=1}^{+\\infty}A_{i}\\right)=\\prod\\limits_{i=1}^{+\\infty}P{\\left(A_{i}\\right)}', insertText: 'P\\left(\\bigcup\\limits_{i=1}^{+\\infty}A_{i}\\right)=\\prod\\limits_{i=1}^{+\\infty}P{\\left(A_{i}\\right)}' },
+      { latex: '\\begin{array}{c}P\\left(\\emptyset\\right)=0\\\\P\\left(S\\right)=1\\end{array}', insertText: '\\begin{array}{c}P\\left(\\emptyset\\right)=0\\\\P\\left(S\\right)=1\\end{array}' },
+      { latex: '\\begin{array}{c}\\forall A\\in S\\\\P\\left(A\\right)\\ge0\\end{array}', insertText: '\\begin{array}{c}\\forall A\\in S\\\\P\\left(A\\right)\\ge0\\end{array}' },
+      { latex: 'P\\left(\\bigcup\\limits_{i=1}^{n}A_{i}\\right)=\\prod\\limits_{i=1}^{n}P\\left(A_{i}\\right)', insertText: 'P\\left(\\bigcup\\limits_{i=1}^{n}A_{i}\\right)=\\prod\\limits_{i=1}^{n}P\\left(A_{i}\\right)' },
+      { latex: '\\begin{array}{c}S=\\binom{N}{n},A_{k}=\\binom{M}{k}\\cdot\\binom{N-M}{n-k}\\\\P\\left(A_{k}\\right)=\\frac{\\binom{M}{k}\\cdot\\binom{N-M}{n-k}}{\\binom{N}{n}}\\end{array}', insertText: '\\begin{array}{c}S=\\binom{N}{n},A_{k}=\\binom{M}{k}\\cdot\\binom{N-M}{n-k}\\\\P\\left(A_{k}\\right)=\\frac{\\binom{M}{k}\\cdot\\binom{N-M}{n-k}}{\\binom{N}{n}}\\end{array}' },
+      { latex: '\\begin{array}{c}P_{n}=n!\\\\A_{n}^{k}=\\frac{n!}{\\left(n-k\\right)!}\\end{array}', insertText: '\\begin{array}{c}P_{n}=n!\\\\A_{n}^{k}=\\frac{n!}{\\left(n-k\\right)!}\\end{array}' }
+    ]
+  },
+  "sequence": {
+    icon: 'a_{n}=2^{n}',
+    formulas: [
+      { latex: 'a_{n}=a_{1}q^{n-1}', insertText: 'a_{n}=a_{1}q^{n-1}' },
+      { latex: 'a_{n}=a_{1}+\\left(n-1\\right)d', insertText: 'a_{n}=a_{1}+\\left(n-1\\right)d' },
+      { latex: 'S_{n}=na_{1}+\\frac{n\\left(n-1\\right)}{2}d', insertText: 'S_{n}=na_{1}+\\frac{n\\left(n-1\\right)}{2}d' },
+      { latex: 'S_{n}=\\frac{n\\left(a_{1}+a_{n}\\right)}{2}', insertText: 'S_{n}=\\frac{n\\left(a_{1}+a_{n}\\right)}{2}' },
+      { latex: '\\frac{1}{n\\left(n+k\\right)}=\\frac{1}{k}\\left(\\frac{1}{n}-\\frac{1}{n+k}\\right)', insertText: '\\frac{1}{n\\left(n+k\\right)}=\\frac{1}{k}\\left(\\frac{1}{n}-\\frac{1}{n+k}\\right)' },
+      { latex: '\\frac{1}{n^{2}-1}=\\frac{1}{2}\\left(\\frac{1}{n-1}-\\frac{1}{n+1}\\right)', insertText: '\\frac{1}{n^{2}-1}=\\frac{1}{2}\\left(\\frac{1}{n-1}-\\frac{1}{n+1}\\right)' },
+      { latex: '\\frac{1}{4n^{2}-1}=\\frac{1}{2}\\left(\\frac{1}{2n-1}-\\frac{1}{2n+1}\\right)', insertText: '\\frac{1}{4n^{2}-1}=\\frac{1}{2}\\left(\\frac{1}{2n-1}-\\frac{1}{2n+1}\\right)' },
+      { latex: '\\frac{n+1}{n\\left(n-1\\right)\\cdot2^{n}}=\\frac{1}{\\left(n-1\\right)\\cdot2^{n-1}}-\\frac{1}{n\\cdot2^{n}}', insertText: '\\frac{n+1}{n\\left(n-1\\right)\\cdot2^{n}}=\\frac{1}{\\left(n-1\\right)\\cdot2^{n-1}}-\\frac{1}{n\\cdot2^{n}}' },
+      { latex: 'a_n=a+nd,\\quad b_n=b+ne\\quad\\Rightarrow\\quad a_n+b_n=(a+b)+n(d+e)', insertText: 'a_n=a+nd,\\quad b_n=b+ne\\quad\\Rightarrow\\quad a_n+b_n=(a+b)+n(d+e)' },
+      { latex: '(1+x)^{n}=1+\\frac{nx}{1!}+\\frac{n(n-1)x^{2}}{2!}+\\cdots', insertText: '(1+x)^{n}=1+\\frac{nx}{1!}+\\frac{n(n-1)x^{2}}{2!}+\\cdots' }
+    ]
+  },
+  "physics": {
+    icon: 'E=mc^{2}',
+    formulas: [
+      { latex: '\\vec{F}=m\\vec{a}', insertText: '\\vec{F}=m\\vec{a}' },
+      { latex: 'E_{\\mathrm{kin}}=\\frac{1}{2}mv^2', insertText: 'E_{\\mathrm{kin}}=\\frac{1}{2}mv^2' },
+      { latex: 'E_{\\mathrm{pot}}=mgh', insertText: 'E_{\\mathrm{pot}}=mgh' },
+      { latex: 'W=\\vec{F}\\cdot\\vec{s}=Fs\\cos\\theta', insertText: 'W=\\vec{F}\\cdot\\vec{s}=Fs\\cos\\theta' },
+      { latex: '\\vec{p}=m\\vec{v}', insertText: '\\vec{p}=m\\vec{v}' },
+      { latex: '\\vec{L}=\\vec{r}\\times\\vec{p}', insertText: '\\vec{L}=\\vec{r}\\times\\vec{p}' },
+      { latex: 'I=\\sum m_ir_i^2', insertText: 'I=\\sum m_ir_i^2' },
+      { latex: 'L=T-V', insertText: 'L=T-V' },
+      { latex: '\\frac{\\mathrm{d}}{\\mathrm{d}t}\\left(\\frac{\\partial L}{\\partial \\dot{q}_i}\\right)-\\frac{\\partial L}{\\partial q_i}=0', insertText: '\\frac{\\mathrm{d}}{\\mathrm{d}t}\\left(\\frac{\\partial L}{\\partial \\dot{q}_i}\\right)-\\frac{\\partial L}{\\partial q_i}=0' },
+      { latex: 'H=\\sum_i\\dot{q}_ip_i-L', insertText: 'H=\\sum_i\\dot{q}_ip_i-L' },
+      { latex: '\\begin{aligned}\\dot{q}_i&=\\frac{\\partial H}{\\partial p_i}\\\\\\dot{p}_i&=-\\frac{\\partial H}{\\partial q_i}\\end{aligned}', insertText: '\\begin{aligned}\\dot{q}_i&=\\frac{\\partial H}{\\partial p_i}\\\\\\dot{p}_i&=-\\frac{\\partial H}{\\partial q_i}\\end{aligned}' },
+      { latex: '\\{f,g\\}=\\sum_i\\left(\\frac{\\partial f}{\\partial q_i}\\frac{\\partial g}{\\partial p_i}-\\frac{\\partial f}{\\partial p_i}\\frac{\\partial g}{\\partial q_i}\\right)', insertText: '\\{f,g\\}=\\sum_i\\left(\\frac{\\partial f}{\\partial q_i}\\frac{\\partial g}{\\partial p_i}-\\frac{\\partial f}{\\partial p_i}\\frac{\\partial g}{\\partial q_i}\\right)' },
+      { latex: 'pV=nRT', insertText: 'pV=nRT' },
+      { latex: 'Q=mc\\Delta T', insertText: 'Q=mc\\Delta T' },
+      { latex: '\\Delta U=Q-W', insertText: '\\Delta U=Q-W' },
+      { latex: '\\Delta S=\\int\\frac{\\mathrm{d}Q}{T}', insertText: '\\Delta S=\\int\\frac{\\mathrm{d}Q}{T}' },
+      { latex: '\\eta=1-\\frac{T_{\\mathrm{C}}}{T_{\\mathrm{H}}}', insertText: '\\eta=1-\\frac{T_{\\mathrm{C}}}{T_{\\mathrm{H}}}' },
+      { latex: '\\oint\\frac{\\mathrm{d}Q}{T}\\leq0', insertText: '\\oint\\frac{\\mathrm{d}Q}{T}\\leq0' },
+      { latex: 'G=U+pV-TS', insertText: 'G=U+pV-TS' },
+      { latex: 'F=U-TS', insertText: 'F=U-TS' },
+      { latex: 'C_V=\\left(\\frac{\\partial U}{\\partial T}\\right)_V,\\quad C_p=\\left(\\frac{\\partial H}{\\partial T}\\right)_p', insertText: 'C_V=\\left(\\frac{\\partial U}{\\partial T}\\right)_V,\\quad C_p=\\left(\\frac{\\partial H}{\\partial T}\\right)_p' },
+      { latex: '\\left(\\frac{\\partial T}{\\partial V}\\right)_S=-\\left(\\frac{\\partial p}{\\partial S}\\right)_V', insertText: '\\left(\\frac{\\partial T}{\\partial V}\\right)_S=-\\left(\\frac{\\partial p}{\\partial S}\\right)_V' },
+      { latex: 'Z=\\sum_i e^{-\\beta E_i},\\quad \\beta=\\frac{1}{k_{\\mathrm{B}}T}', insertText: 'Z=\\sum_i e^{-\\beta E_i},\\quad \\beta=\\frac{1}{k_{\\mathrm{B}}T}' },
+      { latex: '\\langle E\\rangle=-\\frac{\\partial \\ln Z}{\\partial \\beta}', insertText: '\\langle E\\rangle=-\\frac{\\partial \\ln Z}{\\partial \\beta}' },
+      { latex: 'P_i=\\frac{e^{-\\beta E_i}}{Z}', insertText: 'P_i=\\frac{e^{-\\beta E_i}}{Z}' },
+      { latex: 'S=-k_{\\mathrm{B}}\\sum_i P_i\\ln P_i', insertText: 'S=-k_{\\mathrm{B}}\\sum_i P_i\\ln P_i' },
+      { latex: 'F=-k_{\\mathrm{B}}T\\ln Z', insertText: 'F=-k_{\\mathrm{B}}T\\ln Z' },
+      { latex: 'n_1\\sin\\theta_1=n_2\\sin\\theta_2', insertText: 'n_1\\sin\\theta_1=n_2\\sin\\theta_2' },
+      { latex: '\\Delta L=d\\sin\\theta=m\\lambda', insertText: '\\Delta L=d\\sin\\theta=m\\lambda' },
+      { latex: '\\delta\\int_A^B n(\\vec{r})\\,\\mathrm{d}\\ell=0', insertText: '\\delta\\int_A^B n(\\vec{r})\\,\\mathrm{d}\\ell=0' },
+      { latex: 'F=k_{\\mathrm{e}}\\frac{q_1 q_2}{r^2}', insertText: 'F=k_{\\mathrm{e}}\\frac{q_1 q_2}{r^2}' },
+      { latex: '\\vec{E}=\\frac{\\vec{F}}{q}', insertText: '\\vec{E}=\\frac{\\vec{F}}{q}' },
+      { latex: '\\Phi_E=\\oint \\vec{E}\\cdot\\mathrm{d}\\vec{S}=\\frac{q_{\\mathrm{in}}}{\\varepsilon_0}', insertText: '\\Phi_E=\\oint \\vec{E}\\cdot\\mathrm{d}\\vec{S}=\\frac{q_{\\mathrm{in}}}{\\varepsilon_0}' },
+      { latex: '\\oint \\vec{B}\\cdot\\mathrm{d}\\vec{\\ell}=\\mu_0 I_{\\mathrm{in}}', insertText: '\\oint \\vec{B}\\cdot\\mathrm{d}\\vec{\\ell}=\\mu_0 I_{\\mathrm{in}}' },
+      { latex: '\\mathcal{E}=-\\frac{\\mathrm{d}\\Phi_B}{\\mathrm{d}t}', insertText: '\\mathcal{E}=-\\frac{\\mathrm{d}\\Phi_B}{\\mathrm{d}t}' },
+      { latex: '\\begin{aligned}\\nabla\\cdot\\vec{E}&=\\frac{\\rho}{\\varepsilon_0}\\\\\\nabla\\cdot\\vec{B}&=0\\\\\\nabla\\times\\vec{E}&=-\\frac{\\partial \\vec{B}}{\\partial t}\\\\\\nabla\\times\\vec{B}&=\\mu_0\\vec{J}+\\mu_0\\varepsilon_0\\frac{\\partial \\vec{E}}{\\partial t}\\end{aligned}', insertText: '\\begin{aligned}\\nabla\\cdot\\vec{E}&=\\frac{\\rho}{\\varepsilon_0}\\\\\\nabla\\cdot\\vec{B}&=0\\\\\\nabla\\times\\vec{E}&=-\\frac{\\partial \\vec{B}}{\\partial t}\\\\\\nabla\\times\\vec{B}&=\\mu_0\\vec{J}+\\mu_0\\varepsilon_0\\frac{\\partial \\vec{E}}{\\partial t}\\end{aligned}' },
+      { latex: '\\begin{aligned}&\\oint \\vec{E}\\cdot\\mathrm{d}\\vec{S}=\\frac{Q_{\\mathrm{in}}}{\\varepsilon_0}\\\\&\\oint \\vec{B}\\cdot\\mathrm{d}\\vec{S}=0\\\\&\\oint \\vec{E}\\cdot\\mathrm{d}\\vec{\\ell}=-\\frac{\\mathrm{d}}{\\mathrm{d}t}\\int \\vec{B}\\cdot\\mathrm{d}\\vec{S}\\\\&\\oint \\vec{B}\\cdot\\mathrm{d}\\vec{\\ell}=\\mu_0\\left(I+\\varepsilon_0\\frac{\\mathrm{d}}{\\mathrm{d}t}\\int \\vec{E}\\cdot\\mathrm{d}\\vec{S}\\right)\\end{aligned}', insertText: '\\begin{aligned}&\\oint \\vec{E}\\cdot\\mathrm{d}\\vec{S}=\\frac{Q_{\\mathrm{in}}}{\\varepsilon_0}\\\\&\\oint \\vec{B}\\cdot\\mathrm{d}\\vec{S}=0\\\\&\\oint \\vec{E}\\cdot\\mathrm{d}\\vec{\\ell}=-\\frac{\\mathrm{d}}{\\mathrm{d}t}\\int \\vec{B}\\cdot\\mathrm{d}\\vec{S}\\\\&\\oint \\vec{B}\\cdot\\mathrm{d}\\vec{\\ell}=\\mu_0\\left(I+\\varepsilon_0\\frac{\\mathrm{d}}{\\mathrm{d}t}\\int \\vec{E}\\cdot\\mathrm{d}\\vec{S}\\right)\\end{aligned}' },
+      { latex: '\\begin{aligned}\\nabla\\cdot\\vec{D}&=\\rho_{\\mathrm{f}}\\\\\\nabla\\cdot\\vec{B}&=0\\\\\\nabla\\times\\vec{E}&=-\\frac{\\partial \\vec{B}}{\\partial t}\\\\\\nabla\\times\\vec{H}&=\\vec{J}_{\\mathrm{f}}+\\frac{\\partial \\vec{D}}{\\partial t}\\end{aligned}', insertText: '\\begin{aligned}\\nabla\\cdot\\vec{D}&=\\rho_{\\mathrm{f}}\\\\\\nabla\\cdot\\vec{B}&=0\\\\\\nabla\\times\\vec{E}&=-\\frac{\\partial \\vec{B}}{\\partial t}\\\\\\nabla\\times\\vec{H}&=\\vec{J}_{\\mathrm{f}}+\\frac{\\partial \\vec{D}}{\\partial t}\\end{aligned}' },
+      { latex: '\\begin{aligned}\\oint_{\\partial V}\\vec{D}\\cdot\\mathrm{d}\\vec{S}&=Q_{\\mathrm{f,in}}\\\\\\oint_{\\partial V}\\vec{B}\\cdot\\mathrm{d}\\vec{S}&=0\\\\\\oint_{\\partial S}\\vec{E}\\cdot\\mathrm{d}\\vec{\\ell}&=-\\frac{\\mathrm{d}}{\\mathrm{d}t}\\int_S\\vec{B}\\cdot\\mathrm{d}\\vec{S}\\\\\\oint_{\\partial S}\\vec{H}\\cdot\\mathrm{d}\\vec{\\ell}&=I_{\\mathrm{f}}+\\frac{\\mathrm{d}}{\\mathrm{d}t}\\int_S\\vec{D}\\cdot\\mathrm{d}\\vec{S}\\end{aligned}', insertText: '\\begin{aligned}\\oint_{\\partial V}\\vec{D}\\cdot\\mathrm{d}\\vec{S}&=Q_{\\mathrm{f,in}}\\\\\\oint_{\\partial V}\\vec{B}\\cdot\\mathrm{d}\\vec{S}&=0\\\\\\oint_{\\partial S}\\vec{E}\\cdot\\mathrm{d}\\vec{\\ell}&=-\\frac{\\mathrm{d}}{\\mathrm{d}t}\\int_S\\vec{B}\\cdot\\mathrm{d}\\vec{S}\\\\\\oint_{\\partial S}\\vec{H}\\cdot\\mathrm{d}\\vec{\\ell}&=I_{\\mathrm{f}}+\\frac{\\mathrm{d}}{\\mathrm{d}t}\\int_S\\vec{D}\\cdot\\mathrm{d}\\vec{S}\\end{aligned}' },
+      { latex: 'E_n=-\\frac{13.6\\,\\mathrm{eV}}{n^2},\\quad n=1,2,3,\\ldots', insertText: 'E_n=-\\frac{13.6\\,\\mathrm{eV}}{n^2},\\quad n=1,2,3,\\ldots' },
+      { latex: 'E=h\\nu=\\frac{hc}{\\lambda}', insertText: 'E=h\\nu=\\frac{hc}{\\lambda}' },
+      { latex: '\\lambda=\\frac{h}{p}', insertText: '\\lambda=\\frac{h}{p}' },
+      { latex: '\\hat{H}\\psi=E\\psi', insertText: '\\hat{H}\\psi=E\\psi' },
+      { latex: 'i\\hbar\\frac{\\partial}{\\partial t}\\Psi(\\vec{r},t)=\\hat{H}\\Psi(\\vec{r},t)', insertText: 'i\\hbar\\frac{\\partial}{\\partial t}\\Psi(\\vec{r},t)=\\hat{H}\\Psi(\\vec{r},t)' },
+      { latex: '\\Delta x\\,\\Delta p\\geq\\frac{\\hbar}{2}', insertText: '\\Delta x\\,\\Delta p\\geq\\frac{\\hbar}{2}' },
+      { latex: '\\langle A\\rangle=\\langle\\psi|\\hat{A}|\\psi\\rangle', insertText: '\\langle A\\rangle=\\langle\\psi|\\hat{A}|\\psi\\rangle' },
+      { latex: '(i\\gamma^\\mu\\partial_\\mu-m)\\psi=0', insertText: '(i\\gamma^\\mu\\partial_\\mu-m)\\psi=0' },
+      { latex: '\\mathcal{L}=\\frac{1}{2}\\partial^\\mu\\phi\\partial_\\mu\\phi-\\frac{1}{2}m^2\\phi^2', insertText: '\\mathcal{L}=\\frac{1}{2}\\partial^\\mu\\phi\\partial_\\mu\\phi-\\frac{1}{2}m^2\\phi^2' },
+      { latex: '\\mathcal{L}=\\bar{\\psi}(i\\gamma^\\mu\\partial_\\mu-m)\\psi', insertText: '\\mathcal{L}=\\bar{\\psi}(i\\gamma^\\mu\\partial_\\mu-m)\\psi' },
+      { latex: 'F_{\\mu\\nu}=\\partial_\\mu A_\\nu-\\partial_\\nu A_\\mu', insertText: 'F_{\\mu\\nu}=\\partial_\\mu A_\\nu-\\partial_\\nu A_\\mu' },
+      { latex: '\\tilde{F}^{\\mu\\nu}=\\frac{1}{2}\\varepsilon^{\\mu\\nu\\rho\\sigma}F_{\\rho\\sigma}', insertText: '\\tilde{F}^{\\mu\\nu}=\\frac{1}{2}\\varepsilon^{\\mu\\nu\\rho\\sigma}F_{\\rho\\sigma}' },
+      { latex: '\\boxed{\\begin{aligned}\\partial^\\mu F_{\\mu\\nu}&=\\mu_0 J_\\nu\\\\\\partial^\\mu\\tilde{F}_{\\mu\\nu}&=0\\end{aligned}}', insertText: '\\boxed{\\begin{aligned}\\partial^\\mu F_{\\mu\\nu}&=\\mu_0 J_\\nu\\\\\\partial^\\mu\\tilde{F}_{\\mu\\nu}&=0\\end{aligned}}' },
+      { latex: '\\mathcal{L}=-\\frac{1}{4}F_{\\mu\\nu}F^{\\mu\\nu}-J^\\mu A_\\mu', insertText: '\\mathcal{L}=-\\frac{1}{4}F_{\\mu\\nu}F^{\\mu\\nu}-J^\\mu A_\\mu' },
+      { latex: '\\frac{\\partial\\rho}{\\partial t}+\\nabla\\cdot(\\rho\\vec{v})=0', insertText: '\\frac{\\partial\\rho}{\\partial t}+\\nabla\\cdot(\\rho\\vec{v})=0' },
+      { latex: '\\rho\\left(\\frac{\\partial\\vec{v}}{\\partial t}+\\vec{v}\\cdot\\nabla\\vec{v}\\right)=-\\nabla p+\\rho\\vec{g}', insertText: '\\rho\\left(\\frac{\\partial\\vec{v}}{\\partial t}+\\vec{v}\\cdot\\nabla\\vec{v}\\right)=-\\nabla p+\\rho\\vec{g}' },
+      { latex: '\\rho\\left(\\frac{\\partial\\vec{v}}{\\partial t}+\\vec{v}\\cdot\\nabla\\vec{v}\\right)=-\\nabla p+\\mu\\nabla^2\\vec{v}+\\rho\\vec{g}', insertText: '\\rho\\left(\\frac{\\partial\\vec{v}}{\\partial t}+\\vec{v}\\cdot\\nabla\\vec{v}\\right)=-\\nabla p+\\mu\\nabla^2\\vec{v}+\\rho\\vec{g}' },
+      { latex: 's^2=-c^2t^2+x^2+y^2+z^2', insertText: 's^2=-c^2t^2+x^2+y^2+z^2' },
+      { latex: '\\gamma=\\frac{1}{\\sqrt{1-\\dfrac{v^2}{c^2}}}', insertText: '\\gamma=\\frac{1}{\\sqrt{1-\\dfrac{v^2}{c^2}}}' },
+      { latex: '\\vec{p}=\\gamma m\\vec{v}', insertText: '\\vec{p}=\\gamma m\\vec{v}' },
+      { latex: 'E^2=p^2c^2+m^2c^4', insertText: 'E^2=p^2c^2+m^2c^4' },
+      { latex: 'R_{\\mu\\nu}-\\frac{1}{2}Rg_{\\mu\\nu}+\\Lambda g_{\\mu\\nu}=\\frac{8\\pi G}{c^4}T_{\\mu\\nu}', insertText: 'R_{\\mu\\nu}-\\frac{1}{2}Rg_{\\mu\\nu}+\\Lambda g_{\\mu\\nu}=\\frac{8\\pi G}{c^4}T_{\\mu\\nu}' },
+      { latex: '\\mathrm{d}s^2=-\\left(1-\\frac{2GM}{rc^2}\\right)c^2\\mathrm{d}t^2+\\left(1-\\frac{2GM}{rc^2}\\right)^{-1}\\mathrm{d}r^2+r^2\\mathrm{d}\\theta^2+r^2\\sin^2\\theta\\,\\mathrm{d}\\phi^2', insertText: '\\mathrm{d}s^2=-\\left(1-\\frac{2GM}{rc^2}\\right)c^2\\mathrm{d}t^2+\\left(1-\\frac{2GM}{rc^2}\\right)^{-1}\\mathrm{d}r^2+r^2\\mathrm{d}\\theta^2+r^2\\sin^2\\theta\\,\\mathrm{d}\\phi^2' },
+      { latex: '\\mathrm{d}s^2=g_{\\mu\\nu}\\,\\mathrm{d}x^\\mu\\mathrm{d}x^\\nu', insertText: '\\mathrm{d}s^2=g_{\\mu\\nu}\\,\\mathrm{d}x^\\mu\\mathrm{d}x^\\nu' },
+      { latex: '\\frac{\\mathrm{d}^2x^\\mu}{\\mathrm{d}\\tau^2}+\\Gamma^{\\mu}_{\\nu\\rho}\\frac{\\mathrm{d}x^\\nu}{\\mathrm{d}\\tau}\\frac{\\mathrm{d}x^\\rho}{\\mathrm{d}\\tau}=0', insertText: '\\frac{\\mathrm{d}^2x^\\mu}{\\mathrm{d}\\tau^2}+\\Gamma^{\\mu}_{\\nu\\rho}\\frac{\\mathrm{d}x^\\nu}{\\mathrm{d}\\tau}\\frac{\\mathrm{d}x^\\rho}{\\mathrm{d}\\tau}=0' }
+    ]
+  },
+  "chemistry": {
+    icon: 'H_{2}O',
+    formulas: [
+      { latex: '\\ce{SO4^2- + Ba^2+ -> BaSO4 v}', insertText: '\\ce{SO4^2- + Ba^2+ -> BaSO4 v}' },
+      { latex: '\\ce{CaCO3 (s) <=> CaO (s) + CO2 (g)}', insertText: '\\ce{CaCO3 (s) <=> CaO (s) + CO2 (g)}' },
+      { latex: '\\ce{Hg^2+ ->[I-]  \\underset{\\mathrm{red}}{\\ce{HgI2}}  ->[I-]  \\underset{\\mathrm{red}}{\\ce{[Hg^{II}I4]^2-}}}', insertText: '\\ce{Hg^2+ ->[I-]  \\underset{\\mathrm{red}}{\\ce{HgI2}}  ->[I-]  \\underset{\\mathrm{red}}{\\ce{[Hg^{II}I4]^2-}}}' },
+      { latex: '\\ce{Zn^2+  <=>[+ 2OH-][+ 2H+]  \\underset{\\text{amphoteres Hydroxid}}{\\ce{Zn(OH)2 v}}  <=>[+ 2OH-][+ 2H+]  \\underset{\\text{Hydroxozikat}}{\\ce{[Zn(OH)4]^2-}}}', insertText: '\\ce{Zn^2+  <=>[+ 2OH-][+ 2H+]  \\underset{\\text{amphoteres Hydroxid}}{\\ce{Zn(OH)2 v}}  <=>[+ 2OH-][+ 2H+]  \\underset{\\text{Hydroxozikat}}{\\ce{[Zn(OH)4]^2-}}}' },
+      { latex: '\\ce{HCl + NaOH -> NaCl + H2O}', insertText: '\\ce{HCl + NaOH -> NaCl + H2O}' },
+      { latex: '\\ce{Zn + Cu^2+ -> Zn^2+ + Cu}', insertText: '\\ce{Zn + Cu^2+ -> Zn^2+ + Cu}' },
+      { latex: '\\ce{CH3COOH <=> CH3COO^- + H^+}', insertText: '\\ce{CH3COOH <=> CH3COO^- + H^+}' },
+      { latex: '\\ce{Na2CO3 + 2HCl -> 2NaCl + CO2 ^ + H2O}', insertText: '\\ce{Na2CO3 + 2HCl -> 2NaCl + CO2 ^ + H2O}' },
+      { latex: '\\ce{2H2O2 ->[MnO2] 2H2O + O2 ^}', insertText: '\\ce{2H2O2 ->[MnO2] 2H2O + O2 ^}' },
+      { latex: '\\ce{2SO2 + O2 <=>[\\ce{V2O5}] 2SO3}', insertText: '\\ce{2SO2 + O2 <=>[\\ce{V2O5}] 2SO3}' }
+    ]
+  }
+};
+
+const groups = {
+  "basic":{
+    icon: '\\begin{matrix}+&\\approx\\\\\\to&\\because\\end{matrix}',
+    formulas: [
+      { latex: '\+', insertText: '\+' },
+      { latex: '\-', insertText: '\-' },
+      { latex: '\\times', insertText: '\\times' },
+      { latex: '\\div', insertText: '\\div' },
+      { latex: '\\triangleleft', insertText: '\\triangleleft' },
+      { latex: '\\triangleright', insertText: '\\triangleright' },
+      { latex: '\\cdot', insertText: '\\cdot' },
+      { latex: '\\setminus', insertText: '\\setminus' },
+      { latex: '\\star', insertText: '\\star' },
+      { latex: '\\ast', insertText: '\\ast' },
+      { latex: '\\cup', insertText: '\\cup' },
+      { latex: '\\cap', insertText: '\\cap' },
+      { latex: '\\varnothing', insertText: '\\varnothing' },
+      { latex: '\\%', insertText: '\\%' },
+      { latex: '\\sqcup', insertText: '\\sqcup' },
+      { latex: '\\sqcap', insertText: '\\sqcap' },
+      { latex: '\\vee', insertText: '\\vee' },
+      { latex: '\\wedge', insertText: '\\wedge' },
+      { latex: '\\circ', insertText: '\\circ' },
+      { latex: '\\bullet', insertText: '\\bullet' },
+      { latex: '\\oplus', insertText: '\\oplus' },
+      { latex: '\\ominus', insertText: '\\ominus' },
+      { latex: '\\odot', insertText: '\\odot' },
+      { latex: '\\oslash', insertText: '\\oslash' },
+      { latex: '\\otimes', insertText: '\\otimes' },
+      { latex: '\\bigcirc', insertText: '\\bigcirc' },
+      { latex: '\\diamond', insertText: '\\diamond' },
+      { latex: '\\uplus', insertText: '\\uplus' },
+      { latex: '\\bigtriangleup', insertText: '\\bigtriangleup' },
+      { latex: '\\bigtriangledown', insertText: '\\bigtriangledown' },
+      { latex: '\\lhd', insertText: '\\lhd' },
+      { latex: '\\rhd', insertText: '\\rhd' },
+      { latex: '\\unlhd', insertText: '\\unlhd' },
+      { latex: '\\unrhd', insertText: '\\unrhd' },
+      { latex: '\\amalg', insertText: '\\amalg' },
+      { latex: '\\wr', insertText: '\\wr' },
+      { latex: '\\dagger', insertText: '\\dagger' },
+      { latex: '\\ddagger', insertText: '\\ddagger' },
+      { latex: '<', insertText: '<' },
+      { latex: '>', insertText: '>' },
+      { latex: '=', insertText: '=' },
+      { latex: '\\le', insertText: '\\le' },
+      { latex: '\\ge', insertText: '\\ge' },
+      { latex: '\\equiv', insertText: '\\equiv' },
+      { latex: '\\ll', insertText: '\\ll' },
+      { latex: '\\gg', insertText: '\\gg' },
+      { latex: '\\doteq', insertText: '\\doteq' },
+      { latex: '\\prec', insertText: '\\prec' },
+      { latex: '\\succ', insertText: '\\succ' },
+      { latex: '\\sim', insertText: '\\sim' },
+      { latex: '\\preceq', insertText: '\\preceq' },
+      { latex: '\\succeq', insertText: '\\succeq' },
+      { latex: '\\simeq', insertText: '\\simeq' },
+      { latex: '\\approx', insertText: '\\approx' },
+      { latex: '\\subset', insertText: '\\subset' },
+      { latex: '\\supset', insertText: '\\supset' },
+      { latex: '\\subseteq', insertText: '\\subseteq' },
+      { latex: '\\supseteq', insertText: '\\supseteq' },
+      { latex: '\\sqsubset', insertText: '\\sqsubset' },
+      { latex: '\\sqsupset', insertText: '\\sqsupset' },
+      { latex: '\\sqsubseteq', insertText: '\\sqsubseteq' },
+      { latex: '\\sqsupseteq', insertText: '\\sqsupseteq' },
+      { latex: '\\cong', insertText: '\\cong' },
+      { latex: '\\Join', insertText: '\\Join' },
+      { latex: '\\bowtie', insertText: '\\bowtie' },
+      { latex: '\\propto', insertText: '\\propto' },
+      { latex: '\\in', insertText: '\\in' },
+      { latex: '\\ni', insertText: '\\ni' },
+      { latex: '\\vdash', insertText: '\\vdash' },
+      { latex: '\\dashv', insertText: '\\dashv' },
+      { latex: '\\models', insertText: '\\models' },
+      { latex: '\\mid', insertText: '\\mid' },
+      { latex: '\\parallel', insertText: '\\parallel' },
+      { latex: '\\perp', insertText: '\\perp' },
+      { latex: '\\smile', insertText: '\\smile' },
+      { latex: '\\frown', insertText: '\\frown' },
+      { latex: '\\asymp', insertText: '\\asymp' },
+      { latex: '\\notin', insertText: '\\notin' },
+      { latex: '\\ne', insertText: '\\ne' },
+      { latex: '\\gets', insertText: '\\gets' },
+      { latex: '\\to', insertText: '\\to' },
+      { latex: '\\longleftarrow', insertText: '\\longleftarrow' },
+      { latex: '\\longrightarrow', insertText: '\\longrightarrow' },
+      { latex: '\\uparrow', insertText: '\\uparrow' },
+      { latex: '\\downarrow', insertText: '\\downarrow' },
+      { latex: '\\updownarrow', insertText: '\\updownarrow' },
+      { latex: '\\leftrightarrow', insertText: '\\leftrightarrow' },
+      { latex: '\\Uparrow', insertText: '\\Uparrow' },
+      { latex: '\\Downarrow', insertText: '\\Downarrow' },
+      { latex: '\\Updownarrow', insertText: '\\Updownarrow' },
+      { latex: '\\longleftrightarrow', insertText: '\\longleftrightarrow' },
+      { latex: '\\Leftarrow', insertText: '\\Leftarrow' },
+      { latex: '\\Longleftarrow', insertText: '\\Longleftarrow' },
+      { latex: '\\Rightarrow', insertText: '\\Rightarrow' },
+      { latex: '\\Longrightarrow', insertText: '\\Longrightarrow' },
+      { latex: '\\Leftrightarrow', insertText: '\\Leftrightarrow' },
+      { latex: '\\Longleftrightarrow', insertText: '\\Longleftrightarrow' },
+      { latex: '\\mapsto', insertText: '\\mapsto' },
+      { latex: '\\longmapsto', insertText: '\\longmapsto' },
+      { latex: '\\nearrow', insertText: '\\nearrow' },
+      { latex: '\\searrow', insertText: '\\searrow' },
+      { latex: '\\swarrow', insertText: '\\swarrow' },
+      { latex: '\\nwarrow', insertText: '\\nwarrow' },
+      { latex: '\\hookleftarrow', insertText: '\\hookleftarrow' },
+      { latex: '\\hookrightarrow', insertText: '\\hookrightarrow' },
+      { latex: '\\rightleftharpoons', insertText: '\\rightleftharpoons' },
+      { latex: '\\iff', insertText: '\\iff' },
+      { latex: '\\leftharpoonup', insertText: '\\leftharpoonup' },
+      { latex: '\\rightharpoonup', insertText: '\\rightharpoonup' },
+      { latex: '\\leftharpoondown', insertText: '\\leftharpoondown' },
+      { latex: '\\rightharpoondown', insertText: '\\rightharpoondown' },
+      { latex: '\\because', insertText: '\\because' },
+      { latex: '\\therefore', insertText: '\\therefore' },
+      { latex: '\\dots', insertText: '\\dots' },
+      { latex: '\\cdots', insertText: '\\cdots' },
+      { latex: '\\vdots', insertText: '\\vdots' },
+      { latex: '\\ddots', insertText: '\\ddots' },
+      { latex: '\\forall', insertText: '\\forall' },
+      { latex: '\\exists', insertText: '\\exists' },
+      { latex: '\\nexists', insertText: '\\nexists' },
+      { latex: '\\Finv', insertText: '\\Finv' },
+      { latex: '\\neg', insertText: '\\neg' },
+      { latex: '\\prime', insertText: '\\prime' },
+      { latex: '\\emptyset', insertText: '\\emptyset' },
+      { latex: '\\infty', insertText: '\\infty' },
+      { latex: '\\nabla', insertText: '\\nabla' },
+      { latex: '\\triangle', insertText: '\\triangle' },
+      { latex: '\\Box', insertText: '\\Box' },
+      { latex: '\\Diamond', insertText: '\\Diamond' },
+      { latex: '\\bot', insertText: '\\bot' },
+      { latex: '\\top', insertText: '\\top' },
+      { latex: '\\angle', insertText: '\\angle' },
+      { latex: '\\measuredangle', insertText: '\\measuredangle' },
+      { latex: '\\sphericalangle', insertText: '\\sphericalangle' },
+      { latex: '\\surd', insertText: '\\surd' },
+      { latex: '\\diamondsuit', insertText: '\\diamondsuit' },
+      { latex: '\\heartsuit', insertText: '\\heartsuit' },
+      { latex: '\\clubsuit', insertText: '\\clubsuit' },
+      { latex: '\\spadesuit', insertText: '\\spadesuit' },
+      { latex: '\\flat', insertText: '\\flat' },
+      { latex: '\\natural', insertText: '\\natural' },
+      { latex: '\\sharp', insertText: '\\sharp' }
+    ]
+  },
+  "letter": {
+    icon: '\\begin{matrix}\\alpha&\\beta\\\\\\gamma&\\delta\\end{matrix}',
+    formulas: [
+      { latex: '\\alpha', insertText: '\\alpha' },
+      { latex: '\\beta', insertText: '\\beta' },
+      { latex: '\\gamma', insertText: '\\gamma' },
+      { latex: '\\delta', insertText: '\\delta' },
+      { latex: '\\epsilon', insertText: '\\epsilon' },
+      { latex: '\\varepsilon', insertText: '\\varepsilon' },
+      { latex: '\\zeta', insertText: '\\zeta' },
+      { latex: '\\eta', insertText: '\\eta' },
+      { latex: '\\theta', insertText: '\\theta' },
+      { latex: '\\vartheta', insertText: '\\vartheta' },
+      { latex: '\\iota', insertText: '\\iota' },
+      { latex: '\\kappa', insertText: '\\kappa' },
+      { latex: '\\lambda', insertText: '\\lambda' },
+      { latex: '\\mu', insertText: '\\mu' },
+      { latex: '\\nu', insertText: '\\nu' },
+      { latex: '\\xi', insertText: '\\xi' },
+      { latex: 'o', insertText: 'o' },
+      { latex: '\\pi', insertText: '\\pi' },
+      { latex: '\\varpi', insertText: '\\varpi' },
+      { latex: '\\rho', insertText: '\\rho' },
+      { latex: '\\varrho', insertText: '\\varrho' },
+      { latex: '\\sigma', insertText: '\\sigma' },
+      { latex: '\\varsigma', insertText: '\\varsigma' },
+      { latex: '\\tau', insertText: '\\tau' },
+      { latex: '\\upsilon', insertText: '\\upsilon' },
+      { latex: '\\phi', insertText: '\\phi' },
+      { latex: '\\varphi', insertText: '\\varphi' },
+      { latex: '\\chi', insertText: '\\chi' },
+      { latex: '\\psi', insertText: '\\psi' },
+      { latex: '\\omega', insertText: '\\omega' },
+      { latex: '\\Gamma', insertText: '\\Gamma' },
+      { latex: '\\Delta', insertText: '\\Delta' },
+      { latex: '\\Theta', insertText: '\\Theta' },
+      { latex: '\\Lambda', insertText: '\\Lambda' },
+      { latex: '\\Xi', insertText: '\\Xi' },
+      { latex: '\\Pi', insertText: '\\Pi' },
+      { latex: '\\Sigma', insertText: '\\Sigma' },
+      { latex: '\\Upsilon', insertText: '\\Upsilon' },
+      { latex: '\\Phi', insertText: '\\Phi' },
+      { latex: '\\Psi', insertText: '\\Psi' },
+      { latex: '\\Omega', insertText: '\\Omega' },
+      { latex: '\\hbar', insertText: '\\hbar' },
+      { latex: '\\imath', insertText: '\\imath' },
+      { latex: '\\jmath', insertText: '\\jmath' },
+      { latex: '\\ell', insertText: '\\ell' },
+      { latex: '\\Re', insertText: '\\Re' },
+      { latex: '\\Im', insertText: '\\Im' },
+      { latex: '\\aleph', insertText: '\\aleph' },
+      { latex: '\\beth', insertText: '\\beth' },
+      { latex: '\\gimel', insertText: '\\gimel' },
+      { latex: '\\daleth', insertText: '\\daleth' },
+      { latex: '\\wp', insertText: '\\wp' },
+      { latex: '\\mho', insertText: '\\mho' },
+      { latex: '\\backepsilon', insertText: '\\backepsilon' },
+      { latex: '\\partial', insertText: '\\partial' },
+      { latex: '\\eth', insertText: '\\eth' },
+      { latex: '\\Bbbk', insertText: '\\Bbbk' },
+      { latex: '\\complement', insertText: '\\complement' },
+      { latex: '\\circledS', insertText: '\\circledS' },
+      { latex: '\\S', insertText: '\\S' }
+    ]
+  },
+  "frac": {
+    icon: '\\begin{matrix}\\frac{a}{b}&\\dot{x}\\\\{f}\'&\\bmod\\end{matrix}',
+    formulas: [
+      { latex: '\\frac{a}{b}', insertText: '\\frac{}{}' },
+      { latex: 'x\\tfrac{a}{b}', insertText: 'x\\tfrac{}{}' },
+      { latex: '\\mathrm{d}t', insertText: '\\mathrm{d}t' },
+      { latex: '\\frac{\\mathrm{d}y}{\\mathrm{d}x}', insertText: '\\frac{\\mathrm{d}y}{\\mathrm{d}x}' },
+      { latex: '\\partial t', insertText: '\\partial t' },
+      { latex: '\\frac{\\partial y}{\\partial x}', insertText: '\\frac{\\partial y}{\\partial x}' },
+      { latex: '\\nabla\\psi', insertText: '\\nabla\\psi' },
+      { latex: '\\frac{\\partial^2}{\\partial x_1\\partial x_2}y', insertText: '\\frac{\\partial^2}{\\partial x_1\\partial x_2}y' },
+      { latex: '\\cfrac{1}{a+\\cfrac{7}{b+\\cfrac{2}{9}}}=c', insertText: '\\cfrac{1}{a+\\cfrac{7}{b+\\cfrac{2}{9}}}=c' },
+      { latex: 'x=a_0+\\cfrac{1}{a_1+\\cfrac{1}{a_2+\\cfrac{1}{a_3+\\cfrac{1}{a_4}}}}', insertText: 'x=a_0+\\cfrac{1}{a_1+\\cfrac{1}{a_2+\\cfrac{1}{a_3+\\cfrac{1}{a_4}}}}' },
+      { latex: '\\dot{x}', insertText: '\\dot{}' },
+      { latex: '\\ddot{x}', insertText: '\\ddot{}' },
+      { latex: '{f}\'', insertText: '{f}\\\'' },
+      { latex: '{f}\'\'', insertText: '{f}\\\'\\\'' },
+      { latex: '{f}^{(n)}', insertText: '{f}^{()}' },
+      { latex: 'a\\bmod b', insertText: 'a\\bmod b' },
+      { latex: 'a\\equiv b\\pmod{m}', insertText: 'a\\equiv b\\pmod{m}' },
+      { latex: '\\gcd(m,n)', insertText: '\\gcd(m,n)' },
+      { latex: '\\operatorname{lcm}(m,n)', insertText: '\\operatorname{lcm}(m,n)' }
+    ]
+  },
+  "vec": {
+    icon: '\\begin{matrix}\\sqrt{x}&x^{a}\\\\\\hat{a}&\\vec{a}\\end{matrix}',
+    formulas: [
+      { latex: '\\sqrt{x}', insertText: '\\sqrt{}' },
+      { latex: '\\sqrt[n]{x}', insertText: '\\sqrt[]{}' },
+      { latex: 'x^{a}', insertText: 'x^{}' },
+      { latex: 'x_{a}', insertText: 'x_{}' },
+      { latex: 'x_{a}^{b}', insertText: 'x_{}^{}' },
+      { latex: '{_{a}^{b}}x', insertText: '{_{}^{}}x' },
+      { latex: '{_a^b}x_c^d', insertText: '{_{}^{}}x_{}^{}' },
+      { latex: '\\overset{u}{\\underset{d}{{_{a}^{b}}x_{e}^{f}}}', insertText: '\\overset{u}{\\underset{d}{{_{a}^{b}}x_{e}^{f}}}' },
+      { latex: '\\hat{a}', insertText: '\\hat{}' },
+      { latex: '\\check{a}', insertText: '\\check{}' },
+      { latex: '\\grave{a}', insertText: '\\grave{}' },
+      { latex: '\\acute{a}', insertText: '\\acute{}' },
+      { latex: '\\tilde{a}', insertText: '\\tilde{}' },
+      { latex: '\\breve{a}', insertText: '\\breve{}' },
+      { latex: '\\bar{a}', insertText: '\\bar{}' },
+      { latex: '\\vec{a}', insertText: '\\vec{}' },
+      { latex: '\\not{a}', insertText: '\\not{}' },
+      { latex: 'p\\mkern-9.5mu/', insertText: 'p\\mkern-9.5mu/' },
+      { latex: '37^{\\circ}', insertText: '37^{\\circ}' },
+      { latex: '\\widetilde{abc}', insertText: '\\widetilde{}' },
+      { latex: '\\widehat{abc}', insertText: '\\widehat{}' },
+      { latex: '\\overleftarrow{abc}', insertText: '\\overleftarrow{}' },
+      { latex: '\\overrightarrow{abc}', insertText: '\\overrightarrow{}' },
+      { latex: '\\overline{abc}', insertText: '\\overline{}' },
+      { latex: '\\underline{abc}', insertText: '\\underline{}' },
+      { latex: '\\overbrace{abc}', insertText: '\\overbrace{}' },
+      { latex: '\\underbrace{abc}', insertText: '\\underbrace{}' },
+      { latex: '\\overset{a}{abc}', insertText: '\\overset{}{}' },
+      { latex: '\\underset{a}{abc}', insertText: '\\underset{}{}' },
+      { latex: '\\stackrel\\frown{AB}', insertText: '\\stackrel\\frown{}' },
+      { latex: '\\overleftrightarrow{AB}', insertText: '\\overleftrightarrow{}' },
+      { latex: '\\overset{a}{\\leftarrow}', insertText: '\\overset{}{}' },
+      { latex: '\\overset{a}{\\rightarrow}', insertText: '\\overset{}{}' },
+      { latex: '\\xleftarrow[abc]{a}', insertText: '\\xleftarrow[abc]{a}' },
+      { latex: '\\xrightarrow[abc]{a}', insertText: '\\xrightarrow[abc]{a}' }
+    ]
+  },
+  "limit": {
+    icon: '\\begin{matrix}\\lim_{x\\to0}&\\lg_{a}{b}\\\\\\sup t&\\ker\\phi\\end{matrix}',
+    formulas: [
+      { latex: '\\lim a', insertText: '\\lim' },
+      { latex: '\\lim_{x\\to0}', insertText: '\\lim_{}' },
+      { latex: '\\max_{a}b', insertText: '\\max_{}' },
+      { latex: '\\min_{a}b', insertText: '\\min_{}' },
+      { latex: '\\log_{a}{b}', insertText: '\\log_{}{}' },
+      { latex: '\\lg_{a}{b}', insertText: '\\lg_{}{}' },
+      { latex: '\\ln_{a}{b}', insertText: '\\ln_{}{}' },
+      { latex: '\\exp a', insertText: '\\exp' },
+      { latex: '\\sup t', insertText: '\\sup' },
+      { latex: '\\inf s', insertText: '\\inf' },
+      { latex: '\\lim u', insertText: '\\lim' },
+      { latex: '\\limsup w', insertText: '\\limsup' },
+      { latex: '\\liminf v', insertText: '\\liminf' },
+      { latex: '\\dim p', insertText: '\\dim' },
+      { latex: '\\ker\\phi', insertText: '\\ker' }
+    ]
+  },
+  "sin": {
+    icon: '\\begin{matrix}\\sin&\\sin^{-1}\\\\\\sinh&\\sinh^{-1}\\end{matrix}',
+    formulas: [
+      { latex: '\\sin\\alpha', insertText: '\\sin' },
+      { latex: '\\cos\\alpha', insertText: '\\cos' },
+      { latex: '\\tan\\alpha', insertText: '\\tan' },
+      { latex: '\\cot\\alpha', insertText: '\\cot' },
+      { latex: '\\sec\\alpha', insertText: '\\sec' },
+      { latex: '\\csc\\alpha', insertText: '\\csc' },
+      { latex: '\\sin^{-1}\\alpha', insertText: '\\sin^{-1}' },
+      { latex: '\\cos^{-1}\\alpha', insertText: '\\cos^{-1}' },
+      { latex: '\\tan^{-1}\\alpha', insertText: '\\tan^{-1}' },
+      { latex: '\\cot^{-1}\\alpha', insertText: '\\cot^{-1}' },
+      { latex: '\\sec^{-1}\\alpha', insertText: '\\sec^{-1}' },
+      { latex: '\\csc^{-1}\\alpha', insertText: '\\csc^{-1}' },
+      { latex: '\\arcsin\\alpha', insertText: '\\arcsin' },
+      { latex: '\\arccos\\alpha', insertText: '\\arccos' },
+      { latex: '\\arctan\\alpha', insertText: '\\arctan' },
+      { latex: '\\operatorname{arccot}\\alpha', insertText: '\\operatorname{arccot}' },
+      { latex: '\\operatorname{arcsec}\\alpha', insertText: '\\operatorname{arcsec}' },
+      { latex: '\\operatorname{arccos}\\alpha', insertText: '\\operatorname{arccos}' },
+      { latex: '\\sinh\\alpha', insertText: '\\sinh' },
+      { latex: '\\cosh\\alpha', insertText: '\\cosh' },
+      { latex: '\\tanh\\alpha', insertText: '\\tanh' },
+      { latex: '\\coth\\alpha', insertText: '\\coth' },
+      { latex: '\\operatorname{sech}\\alpha', insertText: '\\operatorname{sech}' },
+      { latex: '\\operatorname{csch}\\alpha', insertText: '\\operatorname{csch}' },
+      { latex: '\\sinh^{-1}\\alpha', insertText: '\\sinh^{-1}' },
+      { latex: '\\cosh^{-1}\\alpha', insertText: '\\cosh^{-1}' },
+      { latex: '\\tanh^{-1}\\alpha', insertText: '\\tanh^{-1}' },
+      { latex: '\\coth^{-1}\\alpha', insertText: '\\coth^{-1}' },
+      { latex: '\\operatorname{sech}^{-1}\\alpha', insertText: '\\operatorname{sech}^{-1}' },
+      { latex: '\\operatorname{csch}^{-1}\\alpha', insertText: '\\operatorname{csch}^{-1}' }
+    ]
+  },
+  "integrate": {
+    icon: '\\begin{matrix}\\int&\\iint\\\\\\iiint&\\oint\\end{matrix}',
+    formulas: [
+      { latex: '\\int', insertText: '\\int' },
+      { latex: '\\int_{a}^{b}', insertText: '\\int_{}^{}' },
+      { latex: '\\int\\limits_{a}^{b}', insertText: '\\int\\limits_{}^{}' },
+      { latex: '\\iint', insertText: '\\iint' },
+      { latex: '\\iint_{a}^{b}', insertText: '\\iint_{}^{}' },
+      { latex: '\\iint\\limits_{a}^{b}', insertText: '\\iint\\limits_{}^{}' },
+      { latex: '\\iiint', insertText: '\\iiint' },
+      { latex: '\\iiint_{a}^{b}', insertText: '\\iiint_{}^{}' },
+      { latex: '\\iiint\\limits_{a}^{b}', insertText: '\\iiint\\limits_{}^{}' },
+      { latex: '\\oint', insertText: '\\oint' },
+      { latex: '\\oint_{C}^{}', insertText: '\\oint_{}^{}' },
+      { latex: '\\mathop{{\\int\\!\\!\\!\\!\\int}\\mkern-21mu\\bigcirc}{}', insertText: '\\mathop{{\\int\\!\\!\\!\\!\\int}\\mkern-21mu\\bigcirc}{}' },
+      { latex: '\\mathop{{\\int\\!\\!\\!\\!\\int}\\mkern-21mu\\bigcirc}\\nolimits_{C}{}', insertText: '\\mathop{{\\int\\!\\!\\!\\!\\int}\\mkern-21mu\\bigcirc}\\nolimits_{C}{}' },
+      { latex: '\\mathop{{\\int\\!\\!\\!\\!\\int}\\mkern-21mu\\bigcirc}\\limits_{C}{}', insertText: '\\mathop{{\\int\\!\\!\\!\\!\\int}\\mkern-21mu\\bigcirc}\\limits_{C}{}' },
+      { latex: '\\mathop{{\\int\\!\\!\\!\\!\\int\\!\\!\\!\\!\\int}\\mkern-32.4mu\\bigodot}{}', insertText: '\\mathop{{\\int\\!\\!\\!\\!\\int\\!\\!\\!\\!\\int}\\mkern-32.4mu\\bigodot}{}' },
+      { latex: '\\mathop{{\\int\\!\\!\\!\\!\\int\\!\\!\\!\\!\\int}\\mkern-32.4mu\\bigodot}\\nolimits_{C}{}', insertText: '\\mathop{{\\int\\!\\!\\!\\!\\int\\!\\!\\!\\!\\int}\\mkern-32.4mu\\bigodot}\\nolimits_{C}{}' },
+      { latex: '\\mathop{{\\int\\!\\!\\!\\!\\int\\!\\!\\!\\!\\int}\\mkern-32.4mu\\bigodot}\\limits_{C}{}', insertText: '\\mathop{{\\int\\!\\!\\!\\!\\int\\!\\!\\!\\!\\int}\\mkern-32.4mu\\bigodot}\\limits_{C}{}' }
+    ]
+  },
+  "summation": {
+    icon: '\\begin{matrix}\\sum&\\prod\\\\\\bigcap&\\bigvee\\end{matrix}',
+    formulas: [
+      { latex: '\\sum', insertText: '\\sum' },
+      { latex: '\\sum_{a}^{b}', insertText: '\\sum_{}^{}' },
+      { latex: '{\\textstyle\\sum_{a}^{b}}', insertText: '{\\textstyle\\sum_{}^{}}' },
+      { latex: '\\prod', insertText: '\\prod' },
+      { latex: '\\prod_{a}^{b}', insertText: '\\prod_{}^{}' },
+      { latex: '{\\textstyle\\prod_{a}^{b}}', insertText: '{\\textstyle\\prod_{}^{}}' },
+      { latex: '\\coprod', insertText: '\\coprod' },
+      { latex: '\\coprod_{a}^{b}', insertText: '\\coprod_{}^{}' },
+      { latex: '{\\textstyle\\coprod_{a}^{b}}', insertText: '{\\textstyle\\coprod_{}^{}}' },
+      { latex: '\\bigcup', insertText: '\\bigcup' },
+      { latex: '\\bigcup_{a}^{b}', insertText: '\\bigcup_{}^{}' },
+      { latex: '{\\textstyle\\bigcup_{a}^{b}}', insertText: '{\\textstyle\\bigcup_{}^{}}' },
+      { latex: '\\bigcap', insertText: '\\bigcap' },
+      { latex: '\\bigcap_{a}^{b}', insertText: '\\bigcap_{}^{}' },
+      { latex: '{\\textstyle\\bigcap_{a}^{b}}', insertText: '{\\textstyle\\bigcap_{}^{}}' },
+      { latex: '\\bigvee', insertText: '\\bigvee' },
+      { latex: '\\bigvee_{a}^{b}', insertText: '\\bigvee_{}^{}' },
+      { latex: '{\\textstyle\\bigvee_{a}^{b}}', insertText: '{\\textstyle\\bigvee_{}^{}}' },
+      { latex: '\\bigwedge', insertText: '\\bigwedge' },
+      { latex: '\\bigwedge_{a}^{b}', insertText: '\\bigwedge_{}^{}' },
+      { latex: '{\\textstyle\\bigwedge_{a}^{b}}', insertText: '{\\textstyle\\bigwedge_{}^{}}' }
+    ]
+  },
+  "braket": {
+    icon: '\\begin{matrix}\\left(\\right)&\\left[0,1\\right)\\\\\\left\\langle\\psi|\\psi\\right\\rangle&\\begin{matrix}a&b\\\\c&d\\end{matrix}\\end{matrix}',
+    formulas: [
+      { latex: '\\left(\\right)', insertText: '\\left(\\right)' },
+      { latex: '\\left[\\right]', insertText: '\\left[\\right]' },
+      { latex: '\\left\\langle\\right\\rangle', insertText: '\\left\\langle\\right\\rangle' },
+      { latex: '\\left\\{\\right\\}', insertText: '\\left\\{\\right\\}' },
+      { latex: '\\left|\\right|', insertText: '\\left|\\right|' },
+      { latex: '\\left\\|\\right\\|', insertText: '\\left\\|\\right\\|' },
+      { latex: '\\left\\lfloor\\right\\rfloor', insertText: '\\left\\lfloor\\right\\rfloor' },
+      { latex: '\\left\\lceil\\right\\rceil', insertText: '\\left\\lceil\\right\\rceil' },
+      { latex: '\\binom{n}{r}', insertText: '\\binom{}{}' },
+      { latex: '\\left[0,1\\right)', insertText: '\\left[0,1\\right)' },
+      { latex: '\\left\\langle\\psi\\right|', insertText: '\\left\\langle\\psi\\right|' },
+      { latex: '\\left|\\psi\\right\\rangle', insertText: '\\left|\\psi\\right\\rangle' },
+      { latex: '\\left\\langle\\psi|\\psi\\right\\rangle', insertText: '\\left\\langle\\psi|\\psi\\right\\rangle' },
+      { latex: '\\begin{matrix}a&b\\\\c&d\\end{matrix}', insertText: '\\begin{matrix}&\\\\&\\end{matrix}' },
+      { latex: '\\begin{smallmatrix}a&b\\\\c&d\\end{smallmatrix}', insertText: '\\begin{smallmatrix}&\\\\&\\end{smallmatrix}' },
+      { latex: '\\begin{bmatrix}a&b\\\\c&d\\end{bmatrix}', insertText: '\\begin{bmatrix}&\\\\&\\end{bmatrix}' },
+      { latex: '\\begin{pmatrix}a&b\\\\c&d\\end{pmatrix}', insertText: '\\begin{pmatrix}&\\\\&\\end{pmatrix}' },
+      { latex: '\\begin{vmatrix}a&b\\\\c&d\\end{vmatrix}', insertText: '\\begin{vmatrix}&\\\\&\\end{vmatrix}' },
+      { latex: '\\begin{Vmatrix}a&b\\\\c&d\\end{Vmatrix}', insertText: '\\begin{Vmatrix}&\\\\&\\end{Vmatrix}' },
+      { latex: '\\begin{Bmatrix}a&b\\\\c&d\\end{Bmatrix}', insertText: '\\begin{Bmatrix}&\\\\&\\end{Bmatrix}' },
+      { latex: '\\left\\{\\begin{matrix}a&b\\\\c&d\\end{matrix}\\right.', insertText: '\\left\\{\\begin{matrix}&\\\\&\\end{matrix}\\right.' },
+      { latex: '\\left.\\begin{matrix}a&b\\\\c&d\\end{matrix}\\right\\}', insertText: '\\left.\\begin{matrix}&\\\\&\\end{matrix}\\right\\}' },
+      { latex: '\\begin{cases}&\\text{if}x=\\\\&\\text{if}x=\\end{cases}', insertText: '\\begin{cases}&\\text{if}x=\\\\&\\text{if}x=\\end{cases}' }
+    ]
+  },
+  "format": {
+    icon: '\\begin{matrix}\\mathrm{ABC}&\\text{ABC}\\\\\\LARGE{a}&\\color{Blue}{text}\\end{matrix}',
+    formulas: [
+      { latex: '\\mathrm{MATHrm}', insertText: '\\mathrm{}' },
+      { latex: '\\mathbf{MATHbf}', insertText: '\\mathbf{}' },
+      { latex: '\\boldsymbol{BoldSymbol}', insertText: '\\boldsymbol{}' },
+      { latex: '\\mathit{MATHit}', insertText: '\\mathit{}' },
+      { latex: '\\mathsf{MATHsf}', insertText: '\\mathsf{}' },
+      { latex: '\\mathbb{MATHbb}', insertText: '\\mathbb{}' },
+      { latex: '\\mathcal{MATHcal}', insertText: '\\mathcal{}' },
+      { latex: '\\mathfrak{MATHfrak}', insertText: '\\mathfrak{}' },
+      { latex: '\\text{Text}', insertText: '\\text{}' },
+      { latex: '\\textit{TEXTit}', insertText: '\\textit{}' },
+      { latex: '\\textbf{TEXTbf}', insertText: '\\textbf{}' },
+      { latex: '\\textsf{TEXTsf}', insertText: '\\textsf{}' },
+      { latex: '\\texttt{TEXTtt}', insertText: '\\texttt{}' },
+      { latex: '\\textrm{TEXTrm}', insertText: '\\textrm{}' },
+      { latex: '\\textup{TEXTup}', insertText: '\\textup{}' },
+      { latex: '\\tiny{a}', insertText: '\\tiny{}' },
+      { latex: '\\scriptsize{a}', insertText: '\\scriptsize{}' },
+      { latex: '\\small{a}', insertText: '\\small{}' },
+      { latex: '\\normalsize{a}', insertText: '\\normalsize{}' },
+      { latex: '\\large{a}', insertText: '\\large{}' },
+      { latex: '\\Large{a}', insertText: '\\Large{}' },
+      { latex: '\\LARGE{a}', insertText: '\\LARGE{}' },
+      { latex: '\\huge{a}', insertText: '\\huge{}' },
+      { latex: '\\Huge{a}', insertText: '\\Huge{}' },
+      { latex: '{\\color{blue}text}', insertText: '{\\color{blue}}' },
+      { latex: '{\\color{brown}text}', insertText: '{\\color{brown}}' },
+      { latex: '{\\color{gray}text}', insertText: '{\\color{gray}}' },
+      { latex: '{\\color{green}text}', insertText: '{\\color{green}}' },
+      { latex: '{\\color{orange}text}', insertText: '{\\color{orange}}' },
+      { latex: '{\\color{peach}text}', insertText: '{\\color{peach}}' },
+      { latex: '{\\color{purple}text}', insertText: '{\\color{purple}}' },
+      { latex: '{\\color{red}text}', insertText: '{\\color{red}}' },
+      { latex: '{\\color{tan}text}', insertText: '{\\color{tan}}' },
+      { latex: '{\\color{violet}text}', insertText: '{\\color{violet}}' },
+      { latex: '{\\color{yellow}text}', insertText: '{\\color{yellow}}' },
+      { latex: '{{\\color{red}R}{\\color{green}G}{\\color{blue}B}}', insertText: '{\\color[RGB]{135,206,235}}' }
+    ]
+  },
+  "struct": {
+    icon: '\\begin{matrix}a\\quad b&a\\ b\\\\\\text{newline}&\\text{array}\\end{matrix}',
+    formulas: [
+      { latex: 'a\\qquad b', insertText: '\\qquad' },
+      { latex: 'a\\quad b', insertText: '\\quad' },
+      { latex: 'a\\ b', insertText: '\\ ' },
+      { latex: 'a\\;b', insertText: '\\;' },
+      { latex: 'a\\!b', insertText: '\\!' },
+      { latex: 'A\\hspace{-0.1cm}{bc}', insertText: '\\hspace{-0.1cm}{}' },
+      { latex: 'A\\kern{-0.1cm}{bc}', insertText: '\\kern{-0.1cm}{}' },
+      { latex: 'A\\raise{3pt}{A}', insertText: '\\raise{3pt}{}' },
+      { latex: 'A\\lower{3pt}{A}', insertText: '\\lower{3pt}{}' },
+      { latex: '\\rule{1pt}{10pt}', insertText: '\\rule{1pt}{10pt}' },
+      { latex: '\\text{mathstrut}', insertText: '\\mathstrut' },
+      { latex: '\\text{vphantom}', insertText: '\\vphantom{}' },
+      { latex: '\\text{hphantom}', insertText: '\\hphantom{}' },
+      { latex: '\\text{phantom}', insertText: '\\phantom{}' },
+      { latex: '\\text{smash}', insertText: '\\smash{}' },
+      { latex: '\\text{newline}', insertText: '\\\\' },
+      { latex: '\\text{align}', insertText: '\\begin{align}a&=b+c\\\\d&=e+f\\end{align}' },
+      { latex: '\\text{align*}', insertText: '\\begin{align*}a&=b+c\\\\d&=e+f\\end{align*}' },
+      { latex: '\\text{eqnarray}', insertText: '\\begin{eqnarray}a&=&b+c\\\\d&=&e+f\\end{eqnarray}' },
+      { latex: '\\text{eqnarray*}', insertText: '\\begin{eqnarray*}a&=&b+c\\\\d&=&e+f\\end{eqnarray*}' },
+      { latex: '\\text{array}', insertText: '\\begin{array}{c|c}a&b\\\\c&d\\end{array}' }
+    ]
+  }
+};
+
+const BUILTIN_COMMONS = [
+  { latex: '\\text{Inline}', insertText: '{\\textstyle{}}' },
+  { latex: '\\text{Display}', insertText: '{\\displaystyle{}}' },
+  { latex: '\\text{newline}', insertText: '\\\\' },
+  { latex: '\\overrightarrow{ABC}', insertText: '\\overrightarrow{}' },
+  { latex: '\\overline{ABC}', insertText: '\\overline{}' },
+  { latex: '\\underline{ABC}', insertText: '\\underline{}' },
+  { latex: '\\vec{a}', insertText: '\\vec{}' },
+  { latex: '\\hat{a}', insertText: '\\hat{}' },
+  { latex: '\\bar{a}', insertText: '\\bar{}' },
+  { latex: 'p\\mkern-9.5mu/', insertText: 'p\\mkern-9.5mu/' },
+  { latex: '\\partial', insertText: '\\partial' },
+  { latex: '\\mathrm{d}', insertText: '\\mathrm{d}', scale: 1.0 },
+  { latex: '\\mathrm{MATHrm}', insertText: '\\mathrm{}' },
+  { latex: '\\mathbf{MATHbf}', insertText: '\\mathbf{}' },
+  { latex: '\\boldsymbol{BoldSymbol}', insertText: '\\boldsymbol{}' },
+  { latex: '\\mathit{MATHit}', insertText: '\\mathit{}' },
+  { latex: '\\mathbb{MATHbb}', insertText: '\\mathbb{}' },
+  { latex: '\\mathcal{MATHcal}', insertText: '\\mathcal{}' },
+  { latex: '\\text{Text}', insertText: '\\text{}' },
+  { latex: '\\left(\\right)', insertText: '\\left(\\right)' },
+  { latex: '\\left[\\right]', insertText: '\\left[\\right]' },
+  { latex: '\\left\\langle\\right\\rangle', insertText: '\\left\\langle\\right\\rangle' },
+  { latex: '\\left\\{\\right\\}', insertText: '\\left\\{\\right\\}' },
+  { latex: '\\left|\\right|', insertText: '\\left|\\right|' },
+  { latex: '\\left\\|\\right\\|', insertText: '\\left\\|\\right\\|' },
+  { latex: '\\pm', insertText: '\\pm' },
+  { latex: '\\pi', insertText: '\\pi' },
+  { latex: '\\mathrm{e}', insertText: '\\mathrm{e}' },
+  { latex: '\\theta', insertText: '\\theta' },
+  { latex: '\\delta', insertText: '\\delta' },
+  { latex: '\\infty', insertText: '\\infty' },
+  { latex: '\\in', insertText: '\\in' },
+  { latex: '\\to', insertText: '\\to' },
+  { latex: '\\frac{a}{b}', insertText: '\\frac{}{}' },
+  { latex: '\\left\\langle\\psi\\right|', insertText: '\\left\\langle\\psi\\right|' },
+  { latex: '\\left|\\psi\\right\\rangle', insertText: '\\left|\\psi\\right\\rangle' },
+  { latex: '\\left\\langle\\psi|\\psi\\right\\rangle', insertText: '\\left\\langle\\psi|\\psi\\right\\rangle' }
+];
+
+/* =============================================================================
+ *  2. 状态与常量
+ * ============================================================================= */
+const SHOW_HIDDEN_KEY = 'pb_show_hidden';
+
+let customData = {
+  version: 1, customGroups: [], hiddenGroups: [], hiddenFormulas: [],
+  groupOrder: [], formulaOrder: {}, groupLevels: {}, extraFormulas: {}, customCommonFormulas: []
+};
+
+let allGroupsCache = null;
+let managerMode = false;
+let showHiddenItems = false;
+let popupHideTimer = null;
+let isDragging = false;
+let _lastDragTarget = null;
+let currentEditingGroup = null;
+let expandedGroups = new Set();
+let pbMsgIdCounter = 0;
+const pbMsgPending = new Map();
+
+const ICON_EYE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+const ICON_EYE_OFF = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 6.1a10.5 10.5 0 0 1 1.4-.1c6.5 0 10 7 10 7a17.3 17.3 0 0 1-3.6 4.6"/><path d="M6.4 7.8A17.4 17.4 0 0 0 2 12s3.5 7 10 7a10 10 0 0 0 4.2-.9"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
+const ICON_X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+const ICON_EDIT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4l4 4-12 12H4v-4z"/></svg>';
+
+function genId() { return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4); }
+
+let currentEngine = 'katex-inline'; // 新增
+
+function renderFormula(latex, container) {
+  const engine = currentEngine; // 改为读取变量
+  if (engine === 'katex-inline') {
+    katex.render(latex, container, { throwOnError: false, displayMode: false });
+  } else if (engine === 'katex-display') {
+    katex.render(latex, container, { throwOnError: false, displayMode: true });
+  } else if (engine === 'mathjax-inline') {
+    container.innerHTML = '$' + latex + '$';
+    try { MathJax.typesetPromise([container]); } catch (e) {}
+  } else if (engine === 'mathjax-display') {
+    container.innerHTML = '$$' + latex + '$$';
+    try { MathJax.typesetPromise([container]); } catch (e) {}
+  }
+}
+/* =============================================================================
+ *  3. 通信与数据保存/加载
+ * ============================================================================= */
+function pbPostMessage(type, data) {
+  return new Promise((resolve, reject) => {
+    const id = 'pb_' + (++pbMsgIdCounter) + '_' + Date.now();
+    pbMsgPending.set(id, { resolve, reject });
+    window.parent.postMessage({ type, data, id }, '*');
+    setTimeout(() => {
+      if (pbMsgPending.has(id)) {
+        pbMsgPending.delete(id);
+        reject(new Error('通信超时'));
+      }
+    }, 1500);
+  });
+}
+
+function postFormulaToParent(text) {
+  if (!text) return;
+  window.parent.postMessage({ type: 'insert-formula', latex: text }, '*');
+}
+
+window.addEventListener('message', (e) => {
+  const d = e.data;
+  if (!d || typeof d !== 'object') return;
+
+  if (d.type === 'pb:add-common-formula' && d.latex) {
+    customData.customCommonFormulas = customData.customCommonFormulas || [];
+    customData.customCommonFormulas.push({
+      id: 'cc_' + genId(),
+      latex: d.latex,
+      insertText: d.latex
+    });
+    invalidateGroupCache();
+    renderAllGroups();
+    saveCustomData().then(() => {
+      pbToast('已添加到常用：' + d.latex.slice(0, 18));
+    });
+  } else if (d.type === 'pb:add-formula-to-group' && d.gid && d.latex) {
+    addFormulaToGroup(d.gid, d.latex).then(ok => {
+      if (ok) pbToast('已添加到抽屉：' + d.latex.slice(0, 18));
+    });
+  }
+  else if (d.type === 'pb:drag-start') {
+    isDragging = true;
+    hidePopup();
+  }
+  else if (d.type === 'pb:drag-move') {
+    isDragging = true;
+    if (_lastDragTarget) {
+      _lastDragTarget.style.outline = '';
+      _lastDragTarget.style.outlineOffset = '';
+      _lastDragTarget.style.background = '';
+      _lastDragTarget.style.boxShadow = '';
+      _lastDragTarget = null;
+    }
+
+    if (!d.inFrame) return;
+
+    const elem = document.elementFromPoint(d.x, d.y);
+    if (!elem) return;
+
+    let targetEl = null;
+    const wrap = elem.closest('.pb-group-wrap');
+    if (wrap) targetEl = wrap;
+    else if (elem.closest('#commonButtons')) targetEl = document.getElementById('commonButtons');
+
+    if (targetEl) {
+      targetEl.style.outline = '3px dashed #22d3ee';
+      targetEl.style.outlineOffset = '6px';
+      targetEl.style.background = 'rgba(34,211,238,.25)';
+      targetEl.style.boxShadow = '0 0 20px rgba(34,211,238,.8)';
+      targetEl.style.borderRadius = '8px';
+      targetEl.style.transition = 'all .2s';
+      _lastDragTarget = targetEl;
+    }
+  }
+  else if (d.type === 'pb:drag-end') {
+    isDragging = false;
+
+    if (_lastDragTarget) {
+      _lastDragTarget.style.outline = '';
+      _lastDragTarget.style.outlineOffset = '';
+      _lastDragTarget.style.background = '';
+      _lastDragTarget.style.boxShadow = '';
+      _lastDragTarget = null;
+    }
+
+    if (!d.inFrame || !d.latex) return;
+
+    const elem = document.elementFromPoint(d.x, d.y);
+    if (!elem) return;
+
+    const wrap = elem.closest('.pb-group-wrap');
+    if (wrap && wrap.dataset.groupId) {
+      const gid = wrap.dataset.groupId;
+      addFormulaToGroup(gid, d.latex).then(ok => {
+        if (ok) pbToast('已添加到抽屉：' + d.latex.slice(0, 18));
+      });
+      return;
+    }
+
+    const common = elem.closest('#commonButtons');
+    if (common) {
+      customData.customCommonFormulas = customData.customCommonFormulas || [];
+      customData.customCommonFormulas.push({ id: 'cc_' + genId(), latex: d.latex, insertText: d.latex });
+      invalidateGroupCache();
+      renderAllGroups();
+      saveCustomData().then(() => { pbToast('已添加到常用：' + d.latex.slice(0, 18)); });
+    }
+  }
+});
+
+function parseDataObject(parsed) {
+  if (!parsed || typeof parsed !== 'object') return;
+  customData = {
+    version: parsed.version || 1,
+    customGroups: Array.isArray(parsed.customGroups) ? parsed.customGroups : [],
+    hiddenGroups: Array.isArray(parsed.hiddenGroups) ? parsed.hiddenGroups : [],
+    hiddenFormulas: Array.isArray(parsed.hiddenFormulas) ? parsed.hiddenFormulas : [],
+    groupOrder: Array.isArray(parsed.groupOrder) ? parsed.groupOrder : [],
+    formulaOrder: (parsed.formulaOrder && typeof parsed.formulaOrder === 'object') ? parsed.formulaOrder : {},
+    groupLevels: (parsed.groupLevels && typeof parsed.groupLevels === 'object') ? parsed.groupLevels : {},
+    extraFormulas: (parsed.extraFormulas && typeof parsed.extraFormulas === 'object') ? parsed.extraFormulas : {},
+    customCommonFormulas: Array.isArray(parsed.customCommonFormulas) ? parsed.customCommonFormulas : []
+  };
+}
+
+async function loadCustomData() {
+  try {
+    const raw = localStorage.getItem('pb_custom_formulas');
+    if (raw) { parseDataObject(JSON.parse(raw)); }
+  } catch (e) {}
+
+  try {
+    const text = await pbPostMessage('pb:read-custom-formulas', {});
+    if (text) {
+      if (text !== localStorage.getItem('pb_custom_formulas')) {
+        parseDataObject(JSON.parse(text));
+        try { localStorage.setItem('pb_custom_formulas', text); } catch(e){}
+        invalidateGroupCache();
+        renderAllGroups();
+      }
+    }
+  } catch (err) {
+    console.warn('[pb] 无法读取主程序文件，已使用本地缓存数据');
+  }
+}
+async function saveCustomData() {
+  const text = JSON.stringify(customData, null, 2);
+  try { localStorage.setItem('pb_custom_formulas', text); } catch(e) {}
+  try {
+    await pbPostMessage('pb:write-custom-formulas', { text });
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
+
+/* =============================================================================
+ *  4. 数据合并与层级工具
+ * ============================================================================= */
+function getAllGroups() {
+  if (allGroupsCache) return allGroupsCache;
+  const hiddenG = new Set(customData.hiddenGroups || []);
+  const hiddenF = new Set(customData.hiddenFormulas || []);
+  const extras = customData.extraFormulas || {};
+  const out = [];
+
+  for (const k in templates) {
+    const gid = 'tpl:' + k;
+    const base = templates[k].formulas.map((f, i) => ({
+      id: gid + ':' + i, latex: f.latex, insertText: f.insertText, builtin: true, hidden: hiddenF.has(gid + ':' + i)
+    }));
+    const ex = (extras[gid] || []).map(f => ({
+      id: f.id, latex: f.latex, insertText: f.insertText || f.latex, builtin: false, extra: true, hidden: hiddenF.has(f.id)
+    }));
+    out.push({
+      id: gid, source: 'template', key: k, level: getGroupLevel(gid),
+      name: '', nameLatex: templates[k].icon, builtin: true, hidden: hiddenG.has(gid), formulas: [...base, ...ex]
+    });
+  }
+
+  for (const k in groups) {
+    const gid = 'grp:' + k;
+    const base = groups[k].formulas.map((f, i) => ({
+      id: gid + ':' + i, latex: f.latex, insertText: f.insertText, builtin: true, hidden: hiddenF.has(gid + ':' + i)
+    }));
+    const ex = (extras[gid] || []).map(f => ({
+      id: f.id, latex: f.latex, insertText: f.insertText || f.latex, builtin: false, extra: true, hidden: hiddenF.has(f.id)
+    }));
+    out.push({
+      id: gid, source: 'group', key: k, level: getGroupLevel(gid),
+      name: '', nameLatex: groups[k].icon, builtin: true, hidden: hiddenG.has(gid), formulas: [...base, ...ex]
+    });
+  }
+
+  for (const cg of (customData.customGroups || [])) {
+    const gid = cg.id;
+    const base = (cg.formulas || []).map(f => ({
+      id: f.id, latex: f.latex, insertText: f.insertText || f.latex, builtin: false, hidden: hiddenF.has(f.id)
+    }));
+    const ex = (extras[gid] || []).map(f => ({
+      id: f.id, latex: f.latex, insertText: f.insertText || f.latex, builtin: false, extra: true, hidden: hiddenF.has(f.id)
+    }));
+    out.push({
+      id: gid, source: 'custom', level: getGroupLevel(gid),
+      name: cg.name || '', nameLatex: cg.nameLatex || '', builtin: false, hidden: hiddenG.has(gid), formulas: [...base, ...ex]
+    });
+  }
+
+  const commonFormulas = [];
+  BUILTIN_COMMONS.forEach((f, i) => {
+    const fid = 'common:' + i;
+    commonFormulas.push({ id: fid, latex: f.latex, insertText: f.insertText, scale: f.scale, builtin: true, hidden: hiddenF.has(fid) });
+  });
+  (customData.customCommonFormulas || []).forEach(f => {
+    commonFormulas.push({ id: f.id, latex: f.latex, insertText: f.insertText || f.latex, builtin: false, hidden: hiddenF.has(f.id) });
+  });
+  out.push({
+    id: 'common', source: 'common', level: 3, name: '常用公式', nameLatex: '', builtin: true,
+    hidden: hiddenG.has('common'), formulas: commonFormulas
+  });
+
+  const order = Array.isArray(customData.groupOrder) ? customData.groupOrder : [];
+  const indexOf = id => { const i = order.indexOf(id); return i < 0 ? 999999 : i; };
+  out.sort((a, b) => indexOf(a.id) - indexOf(b.id));
+
+  allGroupsCache = out;
+  return out;
+}
+
+function invalidateGroupCache() { allGroupsCache = null; }
+
+function getGroupLevel(gid) {
+  if (customData.groupLevels && customData.groupLevels[gid]) return customData.groupLevels[gid];
+  if (gid === 'common') return 3;
+  const cg = (customData.customGroups || []).find(g => g.id === gid);
+  if (cg) return cg.level || 2;
+  if (gid.startsWith('tpl:')) return 1;
+  if (gid.startsWith('grp:')) return 2;
+  return 2;
+}
+
+function setGroupLevel(gid, level) {
+  if (!customData.groupLevels) customData.groupLevels = {};
+  customData.groupLevels[gid] = level;
+}
+
+function setGroupHidden(gid, hidden) {
+  const list = customData.hiddenGroups || (customData.hiddenGroups = []);
+  const i = list.indexOf(gid);
+  if (hidden && i < 0) list.push(gid);
+  if (!hidden && i >= 0) list.splice(i, 1);
+  invalidateGroupCache();
+}
+
+function setFormulaHidden(fid, hidden) {
+  const list = customData.hiddenFormulas || (customData.hiddenFormulas = []);
+  const i = list.indexOf(fid);
+  if (hidden && i < 0) list.push(fid);
+  if (!hidden && i >= 0) list.splice(i, 1);
+  invalidateGroupCache();
+}
+
+function deleteCustomGroup(gid) {
+  const cg = (customData.customGroups || []).find(g => g.id === gid);
+  const fIds = cg ? (cg.formulas || []).map(f => f.id) : [];
+  customData.customGroups = (customData.customGroups || []).filter(g => g.id !== gid);
+  customData.hiddenGroups = (customData.hiddenGroups || []).filter(x => x !== gid);
+  customData.hiddenFormulas = (customData.hiddenFormulas || []).filter(x => fIds.indexOf(x) < 0);
+  customData.groupOrder = (customData.groupOrder || []).filter(x => x !== gid);
+  if (customData.formulaOrder) delete customData.formulaOrder[gid];
+  if (customData.extraFormulas) delete customData.extraFormulas[gid];
+  if (customData.groupLevels) delete customData.groupLevels[gid];
+  invalidateGroupCache();
+}
+
+function deleteFormulaFromGroup(gid, fid, f) {
+  if (f && f.extra) {
+    const list = (customData.extraFormulas || {})[gid];
+    if (Array.isArray(list)) customData.extraFormulas[gid] = list.filter(x => x.id !== fid);
+  } else {
+    const cg = (customData.customGroups || []).find(x => x.id === gid);
+    if (cg) cg.formulas = (cg.formulas || []).filter(x => x.id !== fid);
+  }
+  customData.hiddenFormulas = (customData.hiddenFormulas || []).filter(x => x !== fid);
+  invalidateGroupCache();
+}
+
+async function addFormulaToGroup(gid, latex) {
+  if (!latex || !latex.trim()) return false;
+  latex = latex.trim();
+  if (!customData.extraFormulas) customData.extraFormulas = {};
+  if (!customData.extraFormulas[gid]) customData.extraFormulas[gid] = [];
+  customData.extraFormulas[gid].push({ id: 'ex_' + genId(), latex: latex, insertText: latex });
+  invalidateGroupCache();
+  const ok = await saveCustomData();
+  if (ok) {
+    const popup = document.getElementById('popupMenu');
+    if (popup && popup.style.display === 'flex') {
+      const g = getAllGroups().find(x => x.id === gid);
+      const anchor = document.querySelector('.pb-group-wrap[data-group-id="' + gid + '"]');
+      if (g && anchor) showPopupForGroup(g, anchor);
+    }
+  }
+  return ok;
+}
+function pbToast(msg, ms) {
+  let el = document.getElementById('__pb_toast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = '__pb_toast';
+    el.style.cssText = 'position:fixed;left:50%;top:20px;transform:translateX(-50%);padding:10px 22px;background:rgba(10,18,32,.96);color:#e6edf7;border:1px solid #22d3ee;border-radius:22px;font-size:13px;z-index:99999;box-shadow:0 10px 36px rgba(0,0,0,.5),0 0 30px rgba(34,211,238,.2);opacity:0;transition:opacity .25s;pointer-events:none;';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.opacity = '1';
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.style.opacity = '0'; }, ms || 2000);
+}
+
+/* =============================================================================
+ *  5. UI & 拖拽逻辑
+ * ============================================================================= */
+function cancelHide() { if (popupHideTimer) { clearTimeout(popupHideTimer); popupHideTimer = null; } }
+function delayedHide() { cancelHide(); popupHideTimer = setTimeout(hidePopup, 260); }
+
+function hidePopup() {
+  const popup = document.getElementById('popupMenu');
+  if (popup) { popup.style.display = 'none'; popup.innerHTML = ''; }
+}
+
+function setManagerMode(on) {
+  managerMode = !!on;
+  const btn = document.getElementById('pbOpenManager');
+  const hint = document.getElementById('pbManagerHint');
+  if (btn) btn.classList.toggle('active', managerMode);
+  if (hint) hint.textContent = managerMode ? '排序模式' : '点击插入'; // 改这里
+  hidePopup();
+  renderAllGroups();
+}
+async function resetAllOrder() {
+  if (!confirm(
+    '确定复原所有排序？\n\n' +
+    '· 内置抽屉回到原始顺序\n' +
+    '· 内置公式回到原始顺序\n' +
+    '· 自定义抽屉、自定义公式排到最末尾\n' +
+    '· 自定义抽屉的层级保持不变（你在哪层就还在哪层）\n' +
+    '· 隐藏状态、自定义内容都不会被改动'
+  )) return;
+
+  // 1) 内置顺序：模板组 → 公式组 → 常用 → 自定义
+  const order = [];
+  for (const k in templates) order.push('tpl:' + k);
+  for (const k in groups) order.push('grp:' + k);
+  order.push('common');
+  for (const cg of (customData.customGroups || [])) order.push(cg.id);
+
+  customData.groupOrder = order;
+  customData.formulaOrder = {};
+
+  // ★ 关键：只清内置抽屉的层覆盖，保留自定义抽屉的层级
+  const keptLevels = {};
+  for (const cg of (customData.customGroups || [])) {
+    // groupLevels 优先，没有就退回 cg.level（两者本应同步）
+    let lv = null;
+    if (customData.groupLevels && customData.groupLevels[cg.id]) {
+      lv = customData.groupLevels[cg.id];
+    } else if (cg.level) {
+      lv = cg.level;
+    }
+    if (lv) {
+      keptLevels[cg.id] = lv;
+      // 顺手同步 cg.level，避免下次读取时不一致
+      cg.level = lv;
+    }
+  }
+  customData.groupLevels = keptLevels;
+
+  invalidateGroupCache();
+  await saveCustomData();
+  hidePopup();
+  renderAllGroups();
+
+// 找到 resetAllOrder 末尾的这部分：
+  const hint = document.getElementById('pbManagerHint');
+  if (hint) {
+    hint.textContent = '已复原';
+    setTimeout(() => { 
+      if (hint.textContent === '已复原') {
+        hint.textContent = managerMode ? '排序模式' : '点击插入'; 
+      }
+    }, 1800);
+  }
+}
+function renderGroupButton(g, container) {
+  const wrap = document.createElement('div');
+  wrap.className = 'pb-group-wrap';
+  wrap.dataset.groupId = g.id;
+  if (managerMode) wrap.classList.add('in-manager');
+  if (g.hidden) wrap.classList.add('is-hidden');
+  if (g.source === 'custom') wrap.classList.add('is-custom');
+
+  const btn = document.createElement('button');
+  btn.className = 'pb-group-btn';
+  const fc = document.createElement('div');
+  btn.appendChild(fc);
+  if (g.nameLatex) {
+    renderFormula(g.nameLatex, fc);
+  } else {
+    fc.textContent = g.name || g.id;
+    fc.style.fontSize = '13px';
+  }
+  wrap.appendChild(btn);
+
+  if (managerMode) {
+    const badges = document.createElement('div');
+    badges.className = 'pb-group-badges';
+
+    const eye = document.createElement('button');
+    eye.className = 'pb-group-badge';
+    eye.title = g.hidden ? '取消隐藏' : '隐藏抽屉';
+    eye.innerHTML = g.hidden ? ICON_EYE_OFF : ICON_EYE;
+    eye.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      setGroupHidden(g.id, !g.hidden);
+      hidePopup();
+      renderAllGroups();
+      saveCustomData();
+    });
+    badges.appendChild(eye);
+
+    if (!g.builtin && g.level !== 3) {
+      const del = document.createElement('button');
+      del.className = 'pb-group-badge danger';
+      del.title = '删除抽屉';
+      del.innerHTML = ICON_X;
+      del.addEventListener('click', async (ev) => {
+        ev.stopPropagation();
+        if (!confirm('确定删除抽屉"' + (g.name || g.id) + '"及其所有公式？')) return;
+        deleteCustomGroup(g.id);
+        renderAllGroups();
+        await saveCustomData();
+      });
+      badges.appendChild(del);
+    }
+    wrap.appendChild(badges);
+    setupGroupDrag(wrap, g.id, container);
+  }
+
+  wrap.addEventListener('mouseenter', () => {
+    if (isDragging) return;
+    cancelHide();
+    showPopupForGroup(g, wrap);
+  });
+  wrap.addEventListener('mouseleave', delayedHide);
+  container.appendChild(wrap);
+}
+
+/* =============================================================================
+ *  ★ 修复 1：setupGroupDrag
+ *    · dragstart 直接 hidePopup()，避免首次拖动抽屉时浮窗挡住视野
+ *    · drop 里先记录 isRight 再清高光（否则拖动排序方向永远判错）
+ *    · drop 读取 latex 的优先级：text/plain → text/pb-formula 反查
+ * ============================================================================= */
+function setupGroupDrag(wrap, gid, container) {
+  wrap.draggable = true;
+
+  wrap.addEventListener('dragstart', (e) => {
+    e.dataTransfer.setData('text/pb-group', gid);
+    e.dataTransfer.effectAllowed = 'move';
+    wrap.classList.add('dragging');
+    hidePopup();                 // ★ 关键：立即隐藏，不等计时器
+    window._pbDragGid = gid;
+  });
+
+  wrap.addEventListener('dragend', () => {
+    wrap.classList.remove('dragging', 'drag-over-left', 'drag-over-right', 'drag-over-formula');
+    document.querySelectorAll('.drag-over-left, .drag-over-right, .drag-over-formula').forEach(el => el.classList.remove('drag-over-left', 'drag-over-right', 'drag-over-formula'));
+    window._pbDragGid = null;
+    delayedHide();
+  });
+
+  wrap.addEventListener('dragover', (e) => {
+    if (!e.dataTransfer) return;
+    if (window._pbDragGid) {
+      if (window._pbDragGid === gid) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      const rect = wrap.getBoundingClientRect();
+      wrap.classList.remove('drag-over-left', 'drag-over-right', 'drag-over-formula');
+      if (e.clientX < rect.left + rect.width / 2) wrap.classList.add('drag-over-left');
+      else wrap.classList.add('drag-over-right');
+      return;
+    }
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    wrap.classList.remove('drag-over-left', 'drag-over-right');
+    wrap.classList.add('drag-over-formula');
+  });
+
+  wrap.addEventListener('dragleave', () => { wrap.classList.remove('drag-over-left', 'drag-over-right', 'drag-over-formula'); });
+
+  wrap.addEventListener('drop', async (e) => {
+    e.preventDefault();
+
+    // ★ 关键：先读取左右方向，再清高光
+    const isRight = wrap.classList.contains('drag-over-right');
+    wrap.classList.remove('drag-over-left', 'drag-over-right', 'drag-over-formula');
+
+    const srcGid = window._pbDragGid;
+    if (srcGid) {
+      if (srcGid === gid) return;
+      await reorderGroup(srcGid, gid, isRight, container);
+      return;
+    }
+
+    // ★ 关键：取 LaTeX 内容（优先 text/plain，兜底 text/pb-formula 反查）
+    const dt = e.dataTransfer;
+    if (!dt) return;
+
+    let latex = (dt.getData('text/plain') || '').trim();
+    if (!latex) {
+      const fid = dt.getData('text/pb-formula');
+      if (fid) {
+        const all = getAllGroups();
+        for (const gg of all) {
+          const f = (gg.formulas || []).find(x => x.id === fid);
+          if (f) { latex = (f.latex || '').trim(); break; }
+        }
+      }
+    }
+    if (!latex) return;
+
+    const ok = await addFormulaToGroup(gid, latex);
+    if (ok) {
+      const g = getAllGroups().find(x => x.id === gid);
+      pbToast('已添加到「' + (g ? (g.name || g.id) : gid) + '」：' + latex.slice(0, 18) + (latex.length > 18 ? '…' : ''));
+    }
+  });
+}
+
+async function reorderGroup(srcGid, dstGid, after, container) {
+  const all = getAllGroups();
+  const srcGroup = all.find(g => g.id === srcGid);
+  const dstGroup = all.find(g => g.id === dstGid);
+  if (!srcGroup || !dstGroup) return;
+
+  if (srcGroup.level !== dstGroup.level && dstGroup.level !== 3) {
+    setGroupLevel(srcGid, dstGroup.level);
+    const cg = (customData.customGroups || []).find(x => x.id === srcGid);
+    if (cg) cg.level = dstGroup.level;
+  }
+
+  let order = Array.isArray(customData.groupOrder) ? customData.groupOrder.slice() : [];
+  all.forEach(g => { if (!order.includes(g.id)) order.push(g.id); });
+  order = order.filter(id => id !== srcGid);
+  const dstIdx = order.indexOf(dstGid);
+  if (dstIdx < 0) return;
+  const insertIdx = after ? dstIdx + 1 : dstIdx;
+  order.splice(insertIdx, 0, srcGid);
+
+  customData.groupOrder = order;
+  invalidateGroupCache();
+  hidePopup();
+  renderAllGroups();
+  await saveCustomData();
+}
+
+function applyFormulaOrder(g, list) {
+  const ord = (customData.formulaOrder || {})[g.id];
+  if (!Array.isArray(ord)) return list;
+  const map = new Map(list.map(f => [f.id, f]));
+  const result = [];
+  ord.forEach(fid => { if (map.has(fid)) { result.push(map.get(fid)); map.delete(fid); } });
+  list.forEach(f => { if (map.has(f.id)) result.push(f); });
+  return result;
+}
+
+function showPopupForGroup(g, anchorEl) {
+  cancelHide();
+  const latest = getAllGroups().find(x => x.id === g.id);
+  if (latest) g = latest;
+  const popup = document.getElementById('popupMenu');
+  if (!popup) return;
+
+  popup.dataset.groupId = g.id;
+  popup.innerHTML = '';
+  const rawList = (g.formulas || []).filter(f => !f.hidden || showHiddenItems);
+  const visible = applyFormulaOrder(g, rawList);
+
+  if (!visible.length) {
+    const empty = document.createElement('div');
+    empty.textContent = '（该抽屉暂无可见公式）';
+    empty.style.cssText = 'padding:20px;color:var(--pb-text-dim);font-size:13px;';
+    popup.appendChild(empty);
+  } else {
+    visible.forEach(f => {
+      const fwrap = document.createElement('div');
+      fwrap.className = 'pb-fml-wrap';
+      fwrap.dataset.formulaId = f.id;
+      fwrap.dataset.latex = f.latex || '';     // ★ 修复 5：dragstart 需要用到真实 LaTeX
+      if (managerMode) fwrap.classList.add('in-manager');
+      if (f.hidden) fwrap.classList.add('is-hidden');
+
+      const btn = document.createElement('button');
+      btn.className = 'pb-fml-btn';
+      const fc = document.createElement('div');
+      btn.appendChild(fc);
+      renderFormula(f.latex, fc);
+      if (f.scale) { fc.style.transform = 'scale(' + f.scale + ')'; fc.style.transformOrigin = 'center center'; }
+      btn.addEventListener('click', () => { if (!managerMode) { postFormulaToParent(f.insertText); hidePopup(); } });
+      fwrap.appendChild(btn);
+
+      if (managerMode) {
+        const badges = document.createElement('div');
+        badges.className = 'pb-fml-badges';
+
+        const eye = document.createElement('button');
+        eye.className = 'pb-fml-badge';
+        eye.title = f.hidden ? '取消隐藏' : '隐藏公式';
+        eye.innerHTML = f.hidden ? ICON_EYE_OFF : ICON_EYE;
+        eye.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          setFormulaHidden(f.id, !f.hidden);
+          showPopupForGroup(g, anchorEl);
+          saveCustomData();
+        });
+        badges.appendChild(eye);
+
+        if (!f.builtin) {
+          const del = document.createElement('button');
+          del.className = 'pb-fml-badge danger';
+          del.title = '删除公式';
+          del.innerHTML = ICON_X;
+          del.addEventListener('click', async (ev) => {
+            ev.stopPropagation();
+            if (!confirm('确定删除这个公式？')) return;
+            if (g.id === 'common') {
+              customData.customCommonFormulas = (customData.customCommonFormulas || []).filter(x => x.id !== f.id);
+              customData.hiddenFormulas = (customData.hiddenFormulas || []).filter(x => x !== f.id);
+              invalidateGroupCache();
+            } else {
+              await deleteFormulaFromGroup(g.id, f.id, f);
+            }
+            showPopupForGroup(g, anchorEl);
+            saveCustomData();
+          });
+          badges.appendChild(del);
+        }
+        fwrap.appendChild(badges);
+        setupFormulaDrag(fwrap, g, anchorEl);
+      }
+      popup.appendChild(fwrap);
+    });
+  }
+
+  popup.style.display = 'flex';
+  popup.style.maxHeight = 'none';
+  popup.style.maxWidth = (window.innerWidth - 24) + 'px';
+  popup.style.left = '-9999px';
+  popup.style.top = '0px';
+
+  const rect = anchorEl.getBoundingClientRect();
+  const pw = popup.offsetWidth;
+  const ph = popup.offsetHeight;
+  const GAP = 8, MARGIN = 10;
+
+  let left = rect.left;
+  if (left + pw > window.innerWidth - MARGIN) left = rect.right - pw;
+  if (left < MARGIN) left = MARGIN;
+
+  const spaceBelow = window.innerHeight - rect.bottom - GAP - MARGIN;
+  const spaceAbove = rect.top - GAP - MARGIN;
+  let top;
+  if (ph <= spaceBelow) { top = rect.bottom + GAP; }
+  else if (ph <= spaceAbove) { top = rect.top - ph - GAP; }
+  else if (spaceBelow >= spaceAbove) { top = rect.bottom + GAP; popup.style.maxHeight = spaceBelow + 'px'; }
+  else { top = MARGIN; popup.style.maxHeight = spaceAbove + 'px'; }
+  popup.style.left = left + 'px';
+  popup.style.top = top + 'px';
+}
+
+/* =============================================================================
+ *  ★ 修复 2：setupFormulaDrag
+ *    dragstart 同时写入 text/plain（真实 LaTeX），
+ *    保证拖到别的抽屉时 drop 端一定能拿到内容。
+ * ============================================================================= */
+function setupFormulaDrag(fwrap, g, anchorEl) {
+  fwrap.draggable = true;
+
+  fwrap.addEventListener('dragstart', (e) => {
+    e.dataTransfer.setData('text/pb-formula', fwrap.dataset.formulaId);
+    e.dataTransfer.setData('text/plain', fwrap.dataset.latex || '');
+    e.dataTransfer.effectAllowed = 'copyMove';
+    fwrap.classList.add('dragging');
+    cancelHide();
+    window._pbDragFml = { gid: g.id, fid: fwrap.dataset.formulaId };
+  });
+
+  fwrap.addEventListener('dragend', () => {
+    fwrap.classList.remove('dragging');
+    document.querySelectorAll('.pb-fml-wrap.drag-over-left, .pb-fml-wrap.drag-over-right').forEach(el => el.classList.remove('drag-over-left', 'drag-over-right'));
+    window._pbDragFml = null;
+    delayedHide();
+  });
+
+  fwrap.addEventListener('dragover', (e) => {
+    const d = window._pbDragFml;
+    if (!d || d.gid !== g.id || d.fid === fwrap.dataset.formulaId) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    const rect = fwrap.getBoundingClientRect();
+    fwrap.classList.remove('drag-over-left', 'drag-over-right');
+    if (e.clientX < rect.left + rect.width / 2) fwrap.classList.add('drag-over-left');
+    else fwrap.classList.add('drag-over-right');
+  });
+
+  fwrap.addEventListener('dragleave', () => { fwrap.classList.remove('drag-over-left', 'drag-over-right'); });
+
+  fwrap.addEventListener('drop', async (e) => {
+    e.preventDefault();
+    const d = window._pbDragFml;
+    if (!d || d.gid !== g.id) return;
+    const srcFid = d.fid;
+    const dstFid = fwrap.dataset.formulaId;
+    if (srcFid === dstFid) return;
+    const isRight = fwrap.classList.contains('drag-over-right');
+    fwrap.classList.remove('drag-over-left', 'drag-over-right');
+    await reorderFormula(g, srcFid, dstFid, isRight, anchorEl);
+  });
+}
+
+async function reorderFormula(g, srcFid, dstFid, after, anchorEl) {
+  const popup = document.getElementById('popupMenu');
+  if (!popup) return;
+  const ids = [];
+  popup.querySelectorAll('[data-formula-id]').forEach(el => ids.push(el.dataset.formulaId));
+  const srcIdx = ids.indexOf(srcFid);
+  const dstIdx = ids.indexOf(dstFid);
+  if (srcIdx < 0 || dstIdx < 0) return;
+
+  ids.splice(srcIdx, 1);
+  let newDstIdx = ids.indexOf(dstFid);
+  if (after) newDstIdx++;
+  ids.splice(newDstIdx, 0, srcFid);
+
+  if (!customData.formulaOrder) customData.formulaOrder = {};
+  customData.formulaOrder[g.id] = ids;
+
+  showPopupForGroup(g, anchorEl);
+  await saveCustomData();
+}
+
+/* =============================================================================
+ *  6. 渲染分组
+ * ============================================================================= */
+
+
+function renderAllGroups() {
+  const tplCon = document.getElementById('templateGroupButtons');
+  const grpCon = document.getElementById('groupButtons');
+  const comCon = document.getElementById('commonButtons');
+  if (!tplCon || !grpCon || !comCon) return;
+  tplCon.innerHTML = '';
+  grpCon.innerHTML = '';
+  comCon.innerHTML = '';
+
+  const all = getAllGroups();
+  for (const g of all) {
+    if (g.hidden && !showHiddenItems) continue;
+    if (g.level === 1) renderGroupButton(g, tplCon);
+    else if (g.level === 2) renderGroupButton(g, grpCon);
+    else if (g.level === 3) renderCommonButtons(g, comCon);
+  }
+
+  tplCon.appendChild(createAddGroupBtn(1));
+  grpCon.appendChild(createAddGroupBtn(2));
+}
+
+function createAddGroupBtn(level) {
+  const btn = document.createElement('button');
+  btn.className = 'pb-group-btn';
+  btn.style.cssText += 'padding:6px 14px;font-size:12px;border:1px dashed var(--pb-accent) !important;color:var(--pb-accent) !important;background:transparent !important;';
+  btn.textContent = '+ 新抽屉';
+  btn.title = level === 1 ? '新建模板组（第一层）' : '新建公式组（第二层）';
+  btn.addEventListener('click', () => openGroupEditor(null, level));
+  return btn;
+}
+
+function renderCommonButtons(g, container) {
+  const rawList = (g.formulas || []).filter(f => !f.hidden || showHiddenItems);
+  const visible = applyFormulaOrder(g, rawList);
+
+  if (!visible.length && !managerMode) {
+    const empty = document.createElement('div');
+    empty.textContent = '（暂无可用的常用公式）';
+    empty.style.cssText = 'padding:8px;color:var(--pb-text-dim);font-size:12px;';
+    container.appendChild(empty);
+    return;
+  }
+
+  visible.forEach(f => {
+    const fwrap = document.createElement('div');
+    fwrap.className = 'pb-fml-wrap';
+    fwrap.dataset.formulaId = f.id;
+    fwrap.dataset.latex = f.latex || '';     // ★ 修复 5：dragstart 需要真实 LaTeX
+    if (managerMode) fwrap.classList.add('in-manager');
+    if (f.hidden) fwrap.classList.add('is-hidden');
+
+    const btn = document.createElement('button');
+    btn.className = 'pb-fml-btn';
+    btn.style.minHeight = '34px';
+    btn.style.minWidth = '34px';
+    const fc = document.createElement('div');
+    btn.appendChild(fc);
+    renderFormula(f.latex, fc);
+    if (f.scale) { fc.style.transform = 'scale(' + f.scale + ')'; fc.style.transformOrigin = 'center center'; }
+    btn.addEventListener('click', () => { if (!managerMode) postFormulaToParent(f.insertText); });
+    fwrap.appendChild(btn);
+
+    if (managerMode) {
+      const badges = document.createElement('div');
+      badges.className = 'pb-fml-badges';
+
+      const eye = document.createElement('button');
+      eye.className = 'pb-fml-badge';
+      eye.title = f.hidden ? '取消隐藏' : '隐藏公式';
+      eye.innerHTML = f.hidden ? ICON_EYE_OFF : ICON_EYE;
+      eye.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        setFormulaHidden(f.id, !f.hidden);
+        renderAllGroups();
+        saveCustomData();
+      });
+      badges.appendChild(eye);
+
+      if (!f.builtin) {
+        const del = document.createElement('button');
+        del.className = 'pb-fml-badge danger';
+        del.title = '删除公式';
+        del.innerHTML = ICON_X;
+        del.addEventListener('click', async (ev) => {
+          ev.stopPropagation();
+          if (!confirm('确定删除这个公式？')) return;
+          if (g.id === 'common') {
+            customData.customCommonFormulas = (customData.customCommonFormulas || []).filter(x => x.id !== f.id);
+            customData.hiddenFormulas = (customData.hiddenFormulas || []).filter(x => x !== f.id);
+            invalidateGroupCache();
+          } else {
+            await deleteFormulaFromGroup(g.id, f.id, f);
+          }
+          renderAllGroups();
+          saveCustomData();
+        });
+        badges.appendChild(del);
+      }
+
+      fwrap.appendChild(badges);
+      setupCommonFormulaDrag(fwrap, g, container);
+    }
+    container.appendChild(fwrap);
+  });
+
+  if (managerMode) {
+    const addBtn = document.createElement('button');
+    addBtn.style.cssText = 'padding:0 16px;height:38px;border-radius:8px;font-family:inherit;font-size:12.5px;font-weight:500;cursor:pointer;background:rgba(34,211,238,.04);border:1px dashed var(--pb-accent);color:var(--pb-accent);transition:.15s;display:inline-flex;align-items:center;gap:6px;';
+    addBtn.innerHTML = '<span style="font-size:16px;line-height:1;">+</span> 添加公式';
+    addBtn.title = '添加到常用公式';
+    addBtn.addEventListener('mouseenter', () => { addBtn.style.background = 'rgba(34,211,238,.12)'; addBtn.style.boxShadow = '0 0 16px rgba(34,211,238,.32)'; });
+    addBtn.addEventListener('mouseleave', () => { addBtn.style.background = 'rgba(34,211,238,.04)'; addBtn.style.boxShadow = 'none'; });
+    addBtn.addEventListener('click', () => openAddCommonDialog());
+    container.appendChild(addBtn);
+  }
+}
+
+function setupCommonFormulaDrag(fwrap, g, container) {
+  fwrap.draggable = true;
+  fwrap.addEventListener('dragstart', (e) => {
+    e.dataTransfer.setData('text/pb-formula', fwrap.dataset.formulaId);
+    e.dataTransfer.setData('text/plain', fwrap.dataset.latex || '');
+    e.dataTransfer.effectAllowed = 'copyMove';
+    fwrap.classList.add('dragging');
+    window._pbDragFml = { gid: g.id, fid: fwrap.dataset.formulaId };
+  });
+  fwrap.addEventListener('dragend', () => {
+    fwrap.classList.remove('dragging');
+    document.querySelectorAll('.pb-fml-wrap.drag-over-left, .pb-fml-wrap.drag-over-right').forEach(el => el.classList.remove('drag-over-left', 'drag-over-right'));
+    window._pbDragFml = null;
+  });
+  fwrap.addEventListener('dragover', (e) => {
+    const d = window._pbDragFml;
+    if (!d || d.gid !== g.id || d.fid === fwrap.dataset.formulaId) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    const rect = fwrap.getBoundingClientRect();
+    fwrap.classList.remove('drag-over-left', 'drag-over-right');
+    if (e.clientX < rect.left + rect.width / 2) fwrap.classList.add('drag-over-left');
+    else fwrap.classList.add('drag-over-right');
+  });
+  fwrap.addEventListener('dragleave', () => { fwrap.classList.remove('drag-over-left', 'drag-over-right'); });
+  fwrap.addEventListener('drop', async (e) => {
+    e.preventDefault();
+    const d = window._pbDragFml;
+    if (!d || d.gid !== g.id) return;
+    const srcFid = d.fid;
+    const dstFid = fwrap.dataset.formulaId;
+    if (srcFid === dstFid) return;
+    const isRight = fwrap.classList.contains('drag-over-right');
+    fwrap.classList.remove('drag-over-left', 'drag-over-right');
+    const ids = [];
+    container.querySelectorAll('[data-formula-id]').forEach(el => ids.push(el.dataset.formulaId));
+    const srcIdx = ids.indexOf(srcFid);
+    const dstIdx = ids.indexOf(dstFid);
+    if (srcIdx < 0 || dstIdx < 0) return;
+    ids.splice(srcIdx, 1);
+    let newDstIdx = ids.indexOf(dstFid);
+    if (isRight) newDstIdx++;
+    ids.splice(newDstIdx, 0, srcFid);
+    if (!customData.formulaOrder) customData.formulaOrder = {};
+    customData.formulaOrder[g.id] = ids;
+    renderAllGroups();
+    await saveCustomData();
+  });
+}
+
+/* =============================================================================
+ *  7. 添加常用弹窗
+ * ============================================================================= */
+function openAddCommonDialog() {
+  const mask = document.getElementById('pbAddCommonMask');
+  if (!mask) return;
+  document.getElementById('pbAddCommonLatex').value = '';
+  document.getElementById('pbAddCommonInsert').value = '';
+  document.getElementById('pbAddCommonPreview').innerHTML = '<span style="color:var(--pb-text-dim);font-size:11.5px;font-style:italic;">（输入后显示预览）</span>';
+  mask.classList.add('show');
+  setTimeout(() => { document.getElementById('pbAddCommonLatex').focus(); }, 60);
+}
+
+function closeAddCommonDialog() {
+  const mask = document.getElementById('pbAddCommonMask');
+  if (mask) mask.classList.remove('show');
+}
+
+function updateAddCommonPreview() {
+  const latex = document.getElementById('pbAddCommonLatex').value.trim();
+  const prev = document.getElementById('pbAddCommonPreview');
+  if (!prev) return;
+  if (!latex) {
+    prev.innerHTML = '<span style="color:var(--pb-text-dim);font-size:11.5px;font-style:italic;">（输入后显示预览）</span>';
+    return;
+  }
+  try {
+    prev.innerHTML = '';
+    renderFormula(latex, prev);
+  } catch (e) {
+    prev.textContent = latex;
+    prev.style.color = '#fca5a5';
+  }
+}
+
+async function saveAddCommonFormula() {
+  const latex = document.getElementById('pbAddCommonLatex').value.trim();
+  const insert = document.getElementById('pbAddCommonInsert').value.trim();
+  if (!latex) {
+    document.getElementById('pbAddCommonLatex').focus();
+    return;
+  }
+  customData.customCommonFormulas = customData.customCommonFormulas || [];
+  customData.customCommonFormulas.push({ id: 'cc_' + genId(), latex: latex, insertText: insert || latex });
+  invalidateGroupCache();
+  closeAddCommonDialog();
+  renderAllGroups();
+  await saveCustomData();
+}
+
+/* =============================================================================
+ *  8. 初始化与事件绑定
+ * ============================================================================= */
+
+/* =============================================================================
+ *  ★ 修复 3：setupCommonDropZone
+ *    · dragleave 用 contains(relatedTarget) 判断，避免进子元素时被误清
+ *    · drop 里第一行就清高光，保证紫色虚线不会残留
+ *    · drop 读 latex 的优先级：text/plain → text/pb-formula 反查
+ * ============================================================================= */
+function setupCommonDropZone() {
+  const comCon = document.getElementById('commonButtons');
+  if (!comCon || comCon._dropSetup) return;
+  comCon._dropSetup = true;
+
+  comCon.addEventListener('dragover', (e) => {
+    if (!e.dataTransfer) return;
+    if (window._pbDragGid) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    comCon.classList.add('drag-over-formula');
+  });
+
+  // ★ 关键：只有真正离开容器时才清除高光
+  comCon.addEventListener('dragleave', (e) => {
+    if (!comCon.contains(e.relatedTarget)) comCon.classList.remove('drag-over-formula');
+  });
+
+  comCon.addEventListener('drop', async (e) => {
+    if (!e.dataTransfer) return;
+    // ★ 关键：立刻清高光，无论后面走不走
+    comCon.classList.remove('drag-over-formula');
+    e.preventDefault();
+
+    const dt = e.dataTransfer;
+    let latex = (dt.getData('text/plain') || '').trim();
+    if (!latex) {
+      const fid = dt.getData('text/pb-formula');
+      if (fid) {
+        const all = getAllGroups();
+        for (const gg of all) {
+          const f = (gg.formulas || []).find(x => x.id === fid);
+          if (f) { latex = (f.latex || '').trim(); break; }
+        }
+      }
+    }
+    if (!latex) return;
+
+    customData.customCommonFormulas = customData.customCommonFormulas || [];
+    customData.customCommonFormulas.push({ id: 'cc_' + genId(), latex: latex, insertText: latex });
+    invalidateGroupCache();
+    renderAllGroups();
+    await saveCustomData();
+    pbToast('已添加到常用：' + latex.slice(0, 18) + (latex.length > 18 ? '…' : ''));
+  });
+}
+
+function initUI() {
+  renderAllGroups();
+  const popup = document.getElementById('popupMenu');
+  if (popup) {
+    popup.addEventListener('mouseenter', cancelHide);
+    popup.addEventListener('mouseleave', delayedHide);
+  }
+  setupCommonDropZone();
+}
+
+// 替换掉原本的 initRender 函数
+function setupEngineSwitcher() {
+  const engineBtn = document.getElementById('pbEngineBtn');
+  const engineMenu = document.getElementById('pbEngineMenu');
+  const engineText = document.getElementById('pbEngineText');
+  
+  if (engineBtn && engineMenu && engineText) {
+    engineBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      engineMenu.classList.toggle('show');
+    });
+    
+    document.addEventListener('click', (e) => {
+      if (!engineMenu.contains(e.target) && !engineBtn.contains(e.target)) {
+        engineMenu.classList.remove('show');
+      }
+    });
+    
+    engineMenu.addEventListener('click', (e) => {
+      const item = e.target.closest('.pb-popover-item');
+      if (!item) return;
+      currentEngine = item.dataset.val;
+      engineMenu.querySelectorAll('.pb-popover-item').forEach(el => el.classList.toggle('active', el === item));
+      
+      if (currentEngine === 'katex-inline') engineText.textContent = 'Ki';
+      else if (currentEngine === 'katex-display') engineText.textContent = 'Kd';
+      else if (currentEngine === 'mathjax-inline') engineText.textContent = 'Mi';
+      else if (currentEngine === 'mathjax-display') engineText.textContent = 'Md';
+      
+      engineMenu.classList.remove('show');
+      hidePopup();
+      renderAllGroups();
+    });
+  }
+}
+
+function setupManager() {
+  const openBtn = document.getElementById('pbOpenManager');
+  if (openBtn) openBtn.addEventListener('click', () => setManagerMode(!managerMode));
+
+  const resetBtn = document.getElementById('pbResetOrder');
+  if (resetBtn) resetBtn.addEventListener('click', resetAllOrder);
+
+  // ★ 替换后的隐藏项按钮逻辑
+  const hiddenBtn = document.getElementById('pbShowHiddenBtn');
+  if (hiddenBtn) {
+    try {
+      showHiddenItems = localStorage.getItem(SHOW_HIDDEN_KEY) === '1';
+    } catch (e) {}
+
+    const updateHiddenBtn = () => {
+      hiddenBtn.classList.toggle('active', showHiddenItems);
+      hiddenBtn.querySelector('.icon-eye').style.display = showHiddenItems ? 'none' : 'block';
+      hiddenBtn.querySelector('.icon-eye-off').style.display = showHiddenItems ? 'block' : 'none';
+    };
+    updateHiddenBtn();
+
+    hiddenBtn.addEventListener('click', () => {
+      showHiddenItems = !showHiddenItems;
+      try { localStorage.setItem(SHOW_HIDDEN_KEY, showHiddenItems ? '1' : '0'); } catch (e) {}
+      updateHiddenBtn();
+      hidePopup();
+      renderAllGroups();
+    });
+  }
+  const mask = document.getElementById('pbAddCommonMask');
+  if (mask) {
+    document.getElementById('pbAddCommonClose').addEventListener('click', closeAddCommonDialog);
+    document.getElementById('pbAddCommonCancel').addEventListener('click', closeAddCommonDialog);
+    document.getElementById('pbAddCommonSave').addEventListener('click', saveAddCommonFormula);
+    document.getElementById('pbAddCommonLatex').addEventListener('input', updateAddCommonPreview);
+    document.getElementById('pbAddCommonLatex').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); document.getElementById('pbAddCommonInsert').focus(); }
+    });
+    document.getElementById('pbAddCommonInsert').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); saveAddCommonFormula(); }
+    });
+    mask.addEventListener('click', (e) => { if (e.target === mask) closeAddCommonDialog(); });
+  }
+
+  /* 编辑抽屉弹窗 */
+  if (!document.getElementById('pbGroupEditorMask')) {
+    const editMask = document.createElement('div');
+    editMask.id = 'pbGroupEditorMask';
+    editMask.className = 'pb-modal-mask';
+    editMask.innerHTML =
+      '<div class="pb-modal-card" style="max-width:560px;">' +
+        '<div class="pb-modal-head">' +
+          '<div class="pb-modal-title">EDIT DRAWER · 编辑抽屉</div>' +
+          '<button class="pb-modal-close" id="pbGroupEditorClose">✕</button>' +
+        '</div>' +
+        '<div class="pb-modal-body">' +
+          '<div style="margin-bottom:10px;">' +
+            '<label class="pb-label">所属层级</label>' +
+            '<select id="pbGroupEditorLevel" class="pb-select2">' +
+              '<option value="1">第一层 · 模板组</option>' +
+              '<option value="2">第二层 · 公式组</option>' +
+            '</select>' +
+          '</div>' +
+          '<div style="margin-bottom:10px;">' +
+            '<label class="pb-label">抽屉名称（纯文字）</label>' +
+            '<input id="pbGroupEditorName" class="pb-input" type="text">' +
+          '</div>' +
+          '<div style="margin-bottom:10px;">' +
+            '<label class="pb-label">图标 LaTeX（可选，留空则显示文字）</label>' +
+            '<input id="pbGroupEditorNameLatex" class="pb-input" type="text" placeholder="\\text{力学}" style="font-family:ui-monospace,monospace;">' +
+          '</div>' +
+          '<div style="margin-bottom:14px;padding:8px 10px;background:rgba(34,211,238,.05);border:1px dashed var(--pb-border);border-radius:8px;font-size:12px;">' +
+            '图标预览：<span id="pbGroupEditorPreview" style="display:inline-block;min-height:20px;"></span>' +
+          '</div>' +
+          '<div style="display:flex;align-items:center;margin-bottom:8px;">' +
+            '<b style="font-size:13px;flex:1;">抽屉里的公式</b>' +
+            '<button id="pbGroupEditorAddFormula" class="pb-btn" style="padding:4px 10px;font-size:12px;">+ 添加公式</button>' +
+          '</div>' +
+          '<div id="pbGroupEditorFormulas"></div>' +
+        '</div>' +
+        '<div style="padding:10px 14px;border-top:1px solid var(--pb-border);display:flex;gap:8px;justify-content:flex-end;">' +
+          '<button id="pbGroupEditorCancel" class="pb-btn">取消</button>' +
+          '<button id="pbGroupEditorSave" class="pb-btn primary">保存</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(editMask);
+
+    const closeAll = () => { editMask.classList.remove('show'); };
+    document.getElementById('pbGroupEditorClose').addEventListener('click', closeAll);
+    document.getElementById('pbGroupEditorCancel').addEventListener('click', closeAll);
+
+    document.getElementById('pbGroupEditorName').addEventListener('input', () => {
+      currentEditingGroup.name = document.getElementById('pbGroupEditorName').value;
+      updateGroupEditorPreview();
+    });
+    document.getElementById('pbGroupEditorNameLatex').addEventListener('input', () => {
+      currentEditingGroup.nameLatex = document.getElementById('pbGroupEditorNameLatex').value;
+      updateGroupEditorPreview();
+    });
+    document.getElementById('pbGroupEditorLevel').addEventListener('change', (e) => {
+      currentEditingGroup.level = parseInt(e.target.value, 10);
+    });
+    document.getElementById('pbGroupEditorAddFormula').addEventListener('click', () => {
+      currentEditingGroup.formulas = currentEditingGroup.formulas || [];
+      currentEditingGroup.formulas.push({ id: 'cf_' + genId(), latex: '\\frac{a}{b}', insertText: '\\frac{}{}' });
+      renderGroupEditor();
+    });
+
+    /* =============================================================================
+     *  ★ 修复 4：保存抽屉时把 gid 塞进 groupOrder
+     *    否则 customData.groupOrder 里没有这个 id，
+     *    getAllGroups() 排序时 indexOf 返回 999999 → 永远排最后，
+     *    看起来就像“没换位置”。
+     * ============================================================================= */
+    document.getElementById('pbGroupEditorSave').addEventListener('click', async () => {
+      const g = currentEditingGroup;
+
+      g.name = document.getElementById('pbGroupEditorName').value.trim() || '未命名';
+      g.nameLatex = document.getElementById('pbGroupEditorNameLatex').value.trim();
+      g.level = parseInt(document.getElementById('pbGroupEditorLevel').value, 10) || 2;
+      setGroupLevel(g.id, g.level);
+
+      const list = customData.customGroups || (customData.customGroups = []);
+      const idx = list.findIndex(x => x.id === g.id);
+      if (idx >= 0) list[idx] = g; else list.push(g);
+
+      // ★ 关键：保证 groupOrder 里一定包含该 id（首次新建 / 换层时尤其重要）
+      if (!Array.isArray(customData.groupOrder)) customData.groupOrder = [];
+      if (!customData.groupOrder.includes(g.id)) {
+        customData.groupOrder.push(g.id);
+      }
+
+      invalidateGroupCache();
+      renderAllGroups();
+      editMask.classList.remove('show');
+      await saveCustomData();
+    });
+  }
+}
+
+function openGroupEditor(group, defaultLevel) {
+  if (group) {
+    currentEditingGroup = JSON.parse(JSON.stringify(group));
+  } else {
+    currentEditingGroup = { id: 'cg_' + genId(), name: '新抽屉', nameLatex: '', level: defaultLevel || 2, formulas: [] };
+  }
+  renderGroupEditor();
+  const m = document.getElementById('pbGroupEditorMask');
+  if (m) m.classList.add('show');
+}
+
+function renderGroupEditor() {
+  const g = currentEditingGroup;
+  if (!g) return;
+  document.getElementById('pbGroupEditorName').value = g.name || '';
+  document.getElementById('pbGroupEditorNameLatex').value = g.nameLatex || '';
+  document.getElementById('pbGroupEditorLevel').value = String(g.level || 2);
+  updateGroupEditorPreview();
+
+  const box = document.getElementById('pbGroupEditorFormulas');
+  box.innerHTML = '';
+  if (!(g.formulas || []).length) {
+    const empty = document.createElement('div');
+    empty.textContent = '还没有公式，点上面「+ 添加公式」开始';
+    empty.style.cssText = 'color:var(--pb-text-dim);font-size:12px;padding:12px;text-align:center;background:rgba(34,211,238,.03);border:1px dashed var(--pb-border);border-radius:8px;';
+    box.appendChild(empty);
+  } else {
+    (g.formulas || []).forEach((f, i) => box.appendChild(renderFormulaEditorItem(f, i)));
+  }
+}
+
+function updateGroupEditorPreview() {
+  const nameLatex = (document.getElementById('pbGroupEditorNameLatex').value || '').trim();
+  const name = (document.getElementById('pbGroupEditorName').value || '').trim();
+  const prev = document.getElementById('pbGroupEditorPreview');
+  if (!prev) return;
+  if (nameLatex) {
+    try { katex.render(nameLatex, prev, { throwOnError: false }); }
+    catch (e) { prev.textContent = nameLatex; }
+  } else {
+    prev.textContent = name || '(无名称)';
+  }
+}
+
+function renderFormulaEditorItem(f, i) {
+  const item = document.createElement('div');
+  item.style.cssText = 'padding:10px;margin-bottom:8px;border:1px solid var(--pb-border);border-radius:8px;background:rgba(34,211,238,.03);';
+
+  function makeRow(labelText, inputEl) {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;gap:6px;align-items:center;margin-bottom:6px;';
+    const lb = document.createElement('label');
+    lb.textContent = labelText;
+    lb.style.cssText = 'font-size:12px;color:var(--pb-text-dim);width:36px;flex:none;';
+    row.appendChild(lb);
+    row.appendChild(inputEl);
+    return row;
+  }
+
+  const latexInput = document.createElement('input');
+  latexInput.className = 'pb-input';
+  latexInput.value = f.latex || '';
+  latexInput.style.cssText = 'flex:1;min-width:0;font-family:ui-monospace,monospace;font-size:12px;';
+  item.appendChild(makeRow('显示', latexInput));
+
+  const insertInput = document.createElement('input');
+  insertInput.className = 'pb-input';
+  insertInput.value = f.insertText || '';
+  insertInput.style.cssText = 'flex:1;min-width:0;font-family:ui-monospace,monospace;font-size:12px;';
+  item.appendChild(makeRow('插入', insertInput));
+
+  const prevRow = document.createElement('div');
+  prevRow.style.cssText = 'display:flex;gap:6px;align-items:center;';
+  const lb2 = document.createElement('label');
+  lb2.textContent = '预览';
+  lb2.style.cssText = 'font-size:12px;color:var(--pb-text-dim);width:36px;flex:none;';
+  const prevBox = document.createElement('div');
+  prevBox.style.cssText = 'flex:1;padding:6px 8px;background:rgba(10,18,32,.6);border-radius:6px;min-height:24px;overflow:auto;';
+  const delBtn = document.createElement('button');
+  delBtn.className = 'pb-btn danger';
+  delBtn.textContent = '删除';
+  delBtn.style.cssText = 'padding:4px 10px;font-size:12px;';
+  prevRow.appendChild(lb2);
+  prevRow.appendChild(prevBox);
+  prevRow.appendChild(delBtn);
+  item.appendChild(prevRow);
+
+  const updatePreview = () => {
+    try { katex.render(latexInput.value || '', prevBox, { throwOnError: false }); }
+    catch (e) { prevBox.textContent = latexInput.value; }
+  };
+  updatePreview();
+
+  latexInput.addEventListener('input', () => {
+    currentEditingGroup.formulas[i].latex = latexInput.value;
+    updatePreview();
+  });
+  insertInput.addEventListener('input', () => {
+    currentEditingGroup.formulas[i].insertText = insertInput.value;
+  });
+  delBtn.addEventListener('click', () => {
+    currentEditingGroup.formulas.splice(i, 1);
+    renderGroupEditor();
+  });
+
+  return item;
+}
+
+/* =============================================================================
+ *  9. 启动
+ * ============================================================================= */
+window.addEventListener('load', async () => {
+  await loadCustomData();
+  setupManager();
+  initUI();
+  setupEngineSwitcher(); // ★ 替换了原本的 initRender
+});
+</script>
+</body>
+</html>
